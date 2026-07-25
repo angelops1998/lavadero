@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar usuario' if editar else 'Nuevo usuario' }} — LavaApp{% endblock %}
+
+{% block content %}
+<a href="/admin/usuarios" class="back-link">← Personal</a>
+<div class="page-head"><h1>{{ 'Editar usuario' if editar else 'Nuevo usuario' }}</h1></div>
+
+{% if errores %}
+<div class="alert alert-error"><span class="alert-icon">⚠</span>
+    <ul>{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<form method="post" action="{{ '/admin/usuarios/' ~ editar.id ~ '/editar' if editar else '/admin/usuarios' }}">
+    {{ csrf_input(request) }}
+    <div class="card">
+        <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" name="nombre" required autofocus
+                   value="{{ (form.nombre if form else '') or (editar.nombre if editar else '') }}">
+        </div>
+
+        {% if not editar %}
+        <div class="form-group">
+            <label for="usuario">Usuario (para ingresar)</label>
+            <input type="text" id="usuario" name="usuario" required autocomplete="off"
+                   value="{{ form.usuario if form else '' }}" placeholder="ej: maria">
+        </div>
+        {% else %}
+        <div class="form-group">
+            <label>Usuario</label>
+            <input type="text" value="{{ editar.usuario }}" disabled>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="rol">Rol</label>
+            <select id="rol" name="rol">
+                {% set rol_sel = (form.rol if form else '') or (editar.rol if editar else 'encargado') %}
+                <option value="encargado" {{ 'selected' if rol_sel == 'encargado' }}>Encargado</option>
+                <option value="admin" {{ 'selected' if rol_sel == 'admin' }}>Administrador</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="password">{{ 'Nueva contraseña (dejar vacío para no cambiar)' if editar else 'Contraseña' }}</label>
+            <div class="input-password">
+                <input type="password" id="password" name="password" {{ '' if editar else 'required' }}
+                       autocomplete="new-password" placeholder="{{ 'Sin cambios' if editar else 'mínimo 6 caracteres' }}">
+                <button type="button" class="toggle-password" data-target="password">👁</button>
+            </div>
+        </div>
+
+        {% if editar %}
+        <div class="form-group check-row">
+            <input type="checkbox" id="is_active" name="is_active" {{ 'checked' if editar.is_active }}>
+            <label for="is_active">Cuenta activa (puede ingresar)</label>
+        </div>
+        {% endif %}
+    </div>
+    <div class="action-bar">
+        <a href="/admin/usuarios" class="btn btn-ghost">Cancelar</a>
+        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Servicios — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Servicios y precios</h1>
+        <div class="page-sub">El catálogo que aparece al cargar un pedido</div>
+    </div>
+    {% if user.es_admin %}
+    <a href="/servicios/nuevo" class="btn btn-primary">➕ Nuevo</a>
+    {% endif %}
+</div>
+
+{% if not user.es_admin %}
+<p class="muted mb">Solo un administrador puede editar precios.</p>
+{% endif %}
+
+{% if servicios %}
+<div class="list-simple">
+    {% for s in servicios %}
+    <div class="list-item" style="{{ 'opacity:.6;' if not s.activo }}">
+        <div class="li-main">
+            <div class="li-title">🏷️ {{ s.nombre }} {% if not s.activo %}<span class="muted">(oculto)</span>{% endif %}</div>
+            <div class="li-sub li-precio">{{ s.precio | bs }}</div>
+        </div>
+        {% if user.es_admin %}
+        <div class="li-actions">
+            <a href="/servicios/{{ s.id }}/editar" class="btn btn-outline btn-sm">Editar</a>
+            <form method="post" action="/servicios/{{ s.id }}/toggle">
+                {{ csrf_input(request) }}
+                <button class="btn btn-ghost btn-sm">{{ 'Ocultar' if s.activo else 'Mostrar' }}</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <span class="big">🏷️</span>
+    <p>Todavía no cargaste servicios.</p>
+    {% if user.es_admin %}<a href="/servicios/nuevo" class="btn btn-primary mt">➕ Agregar servicio</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

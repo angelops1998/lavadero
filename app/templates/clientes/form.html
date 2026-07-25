@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar cliente' if cliente else 'Nuevo cliente' }} — LavaApp{% endblock %}
+
+{% block content %}
+<a href="{{ '/clientes/' ~ cliente.id if cliente else '/clientes' }}" class="back-link">← Volver</a>
+<div class="page-head"><h1>{{ 'Editar cliente' if cliente else 'Nuevo cliente' }}</h1></div>
+
+{% if error %}
+<div class="alert alert-error"><span class="alert-icon">⚠</span><span>{{ error }}</span></div>
+{% endif %}
+
+<form method="post" action="{{ '/clientes/' ~ cliente.id ~ '/editar' if cliente else '/clientes' }}">
+    {{ csrf_input(request) }}
+    <div class="card">
+        <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" name="nombre" required autofocus
+                   value="{{ (form.nombre if form else '') or (cliente.nombre if cliente else '') }}"
+                   placeholder="Nombre y apellido">
+        </div>
+        <div class="form-group">
+            <label for="telefono">Teléfono (WhatsApp)</label>
+            <input type="tel" id="telefono" name="telefono" required inputmode="tel"
+                   value="{{ (form.telefono if form else '') or (cliente.telefono if cliente else '') }}"
+                   placeholder="Ej: 71234567">
+        </div>
+        <div class="form-group">
+            <label for="notas">Notas (opcional)</label>
+            <textarea id="notas" name="notas" placeholder="Preferencias, observaciones…">{{ (form.notas if form else '') or (cliente.notas if cliente else '') }}</textarea>
+        </div>
+    </div>
+    <div class="action-bar">
+        <a href="{{ '/clientes/' ~ cliente.id if cliente else '/clientes' }}" class="btn btn-ghost">Cancelar</a>
+        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+    </div>
+</form>
+{% endblock %}

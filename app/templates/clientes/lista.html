@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Clientes — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Clientes</h1>
+    <a href="/clientes/nuevo" class="btn btn-primary">➕ Nuevo</a>
+</div>
+
+<form method="get" action="/clientes" class="search-bar">
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o teléfono…">
+    {% if ver_inactivos %}<input type="hidden" name="inactivos" value="1">{% endif %}
+    <button type="submit" class="btn btn-outline">Buscar</button>
+</form>
+
+{% if clientes %}
+<div class="list-simple">
+    {% for c in clientes %}
+    <a href="/clientes/{{ c.id }}" class="list-item{{ ' inactivo' if not c.activo else '' }}">
+        <div class="li-main">
+            <div class="li-title">👤 {{ c.nombre }}{{ ' (inactivo)' if not c.activo else '' }}</div>
+            <div class="li-sub">📞 {{ c.telefono }}</div>
+        </div>
+        <span class="btn btn-outline btn-sm">Ver →</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <span class="big">👥</span>
+    <p>No hay clientes {{ 'con esa búsqueda' if q else 'todavía' }}.</p>
+    <p class="muted">Se crean solos al cargar un pedido, o podés agregar uno acá.</p>
+</div>
+{% endif %}
+
+<div class="mb" style="text-align:center; margin-top:1.5rem;">
+    <a href="/clientes?{{ 'q=' + q + '&' if q }}{{ 'inactivos=1' if not ver_inactivos else '' }}"
+       class="link-muted">
+        {{ 'Ver activos' if ver_inactivos else 'Ver inactivos' }}
+    </a>
+</div>
+{% endblock %}

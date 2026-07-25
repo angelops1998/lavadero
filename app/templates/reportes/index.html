@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Reportes — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>📊 Reporte de ganancias</h1>
+        <div class="page-sub">{{ desde | fecha }} — {{ hasta | fecha }}</div>
+    </div>
+    <a href="/admin" class="nav-link">← Panel</a>
+</div>
+
+{# Presets rápidos #}
+<div class="chips">
+    <a href="/reportes?preset=hoy" class="chip {{ 'active' if preset == 'hoy' }}">Hoy</a>
+    <a href="/reportes?preset=semana" class="chip {{ 'active' if preset == 'semana' }}">Últimos 7 días</a>
+    <a href="/reportes?preset=mes" class="chip {{ 'active' if preset == 'mes' }}">Este mes</a>
+</div>
+
+{# Rango personalizado #}
+<form method="get" action="/reportes" class="card">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="desde">Desde</label>
+            <input type="date" id="desde" name="desde" value="{{ desde.isoformat() }}">
+        </div>
+        <div class="form-group">
+            <label for="hasta">Hasta</label>
+            <input type="date" id="hasta" name="hasta" value="{{ hasta.isoformat() }}">
+        </div>
+        <div class="form-group" style="justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Aplicar</button>
+        </div>
+    </div>
+</form>
+
+{# Totales del período #}
+<div class="stat-grid">
+    <div class="stat">
+        <div class="stat-num">{{ facturado | bs }}</div>
+        <div class="stat-label">💵 Facturado</div>
+    </div>
+    <div class="stat destacado">
+        <div class="stat-num">{{ cobrado | bs }}</div>
+        <div class="stat-label">✅ Cobrado</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num tag-pendiente">{{ pendiente | bs }}</div>
+        <div class="stat-label">⏳ Pendiente de cobro</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num">{{ num_pedidos }}</div>
+        <div class="stat-label">🧾 Pedidos · ticket prom. {{ ticket | bs }}</div>
+    </div>
+</div>
+
+{% if num_pedidos == 0 %}
+<div class="card empty">
+    <span class="big">📭</span>
+    <p>No hay pedidos en este período.</p>
+</div>
+{% else %}
+
+{# Desglose por día #}
+<div class="card">
+    <div class="card-title">📅 Por día</div>
+    <table class="items-table">
+        <thead>
+            <tr><th>Fecha</th><th class="num">Pedidos</th><th class="num">Facturado</th></tr>
+        </thead>
+        <tbody>
+            {% for d in dias %}
+            <tr>
+                <td>
+                    {{ d.fecha | fecha }}
+                    <div style="height:6px;border-radius:4px;background:var(--primary);opacity:.85;width:{{ d.pct }}%;min-width:2px;margin-top:.3rem;"></div>
+                </td>
+                <td class="num">{{ d.pedidos }}</td>
+                <td class="num">{{ d.facturado | bs }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# Ranking de servicios #}
+<div class="card">
+    <div class="card-title">🏆 Servicios más rentables</div>
+    <table class="items-table">
+        <thead>
+            <tr><th>Servicio</th><th class="num">Cant.</th><th class="num">Facturado</th></tr>
+        </thead>
+        <tbody>
+            {% for r in ranking %}
+            <tr>
+                <td>
+                    {{ r.descripcion }}
+                    <div style="height:6px;border-radius:4px;background:var(--success);opacity:.85;width:{{ r.pct }}%;min-width:2px;margin-top:.3rem;"></div>
+                </td>
+                <td class="num">{{ r.cantidad | cantidad }}{% if r.unidad | unidad %} {{ r.unidad | unidad }}{% endif %}</td>
+                <td class="num">{{ r.subtotal | bs }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

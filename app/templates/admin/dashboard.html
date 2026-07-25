@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Panel — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>⚙️ Panel de administración</h1>
+</div>
+
+<div class="stat-grid">
+    <div class="stat"><div class="stat-num">{{ total_pedidos }}</div><div class="stat-label">Pedidos totales</div></div>
+    <div class="stat destacado"><div class="stat-num">{{ listos }}</div><div class="stat-label">✅ Listos para retirar</div></div>
+    <div class="stat"><div class="stat-num">{{ en_proceso }}</div><div class="stat-label">🧺 En proceso</div></div>
+    <div class="stat"><div class="stat-num">{{ total_clientes }}</div><div class="stat-label">👥 Clientes</div></div>
+</div>
+
+<div class="card">
+    <div class="card-title">💰 Facturación</div>
+    <div class="row-between">
+        <span class="muted">Total facturado</span>
+        <strong style="font-size:var(--font-lg);">{{ facturado | bs }}</strong>
+    </div>
+    <div class="row-between mt">
+        <span class="muted">Pendiente de cobro</span>
+        <strong class="tag-pendiente" style="font-size:var(--font-lg);">{{ pendiente | bs }}</strong>
+    </div>
+    <a href="/reportes" class="btn btn-outline btn-sm mt">📊 Ver reporte de ganancias →</a>
+</div>
+
+<div class="card">
+    <div class="card-title">🔧 Gestión</div>
+    <div class="list-simple">
+        <a href="/admin/usuarios" class="list-item">
+            <div class="li-main"><div class="li-title">👷 Personal (usuarios)</div>
+                <div class="li-sub">Crear y administrar cuentas de encargados</div></div>
+            <span class="btn btn-outline btn-sm">Abrir →</span>
+        </a>
+        <a href="/servicios" class="list-item">
+            <div class="li-main"><div class="li-title">🏷️ Servicios y precios</div>
+                <div class="li-sub">Editar el catálogo</div></div>
+            <span class="btn btn-outline btn-sm">Abrir →</span>
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Consultar mi pedido — LavaApp{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">🔍</div>
+            <h1>Consultar mi pedido</h1>
+            <p>Escribí el código que figura en tu recibo</p>
+        </div>
+
+        <form method="get" action="/consultar">
+            <div class="form-group">
+                <label for="codigo">Código del recibo</label>
+                <input type="text" id="codigo" name="codigo" placeholder="Ej: K7P2M"
+                       autofocus autocapitalize="characters"
+                       style="text-transform:uppercase;letter-spacing:2px;font-size:1.4rem;font-weight:700;text-align:center;">
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-full">Ver estado</button>
+        </form>
+
+        <div style="text-align:center;margin:1.2rem 0 .6rem;color:var(--text-muted);">— o —</div>
+
+        <form method="get" action="/consultar">
+            <div class="form-group">
+                <label for="telefono">Tu número de teléfono</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="Ej: 71234567" inputmode="tel">
+            </div>
+            <button type="submit" class="btn btn-outline btn-full">Buscar por teléfono</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

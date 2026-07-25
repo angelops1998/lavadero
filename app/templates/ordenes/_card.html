@@ -1,0 +1,17 @@
+{% set info = orden.estado_info %}
+<a href="/ordenes/{{ orden.id }}" class="orden-card e-{{ orden.estado }}{{ ' atrasado' if orden.atrasado }}">
+    <div class="orden-card-top">
+        <span class="orden-codigo">{{ orden.codigo }}{% if orden.express %} <span class="chip-express">⚡</span>{% endif %}</span>
+        <span class="badge badge-{{ info.color }}">{{ info.emoji }} {{ info.label }}</span>
+    </div>
+    <div class="orden-meta">
+        <span class="orden-cliente">👤 {{ orden.cliente.nombre }}</span>
+        <span class="orden-total">{{ orden.total | bs }}</span>
+    </div>
+    <div class="orden-meta">
+        <span>{{ orden.fecha_ingreso | fecha }}{% if orden.fecha_prometida %} · 🗓️ {{ orden.fecha_prometida | fecha }}{% endif %}</span>
+        {% if orden.pagado %}<span class="pago-tag ok">✅ Pagado</span>
+        {% elif orden.pago_parcial %}<span class="pago-tag parcial">🟡 Seña</span>
+        {% else %}<span class="pago-tag pend">⏳ Pendiente</span>{% endif %}
+    </div>
+</a>

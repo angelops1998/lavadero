@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Pedido {{ orden.codigo }} — LavaApp{% endblock %}
+
+{% block content %}
+{% set info = orden.estado_info %}
+<a href="/ordenes" class="back-link">← Pedidos</a>
+
+<div class="detalle-head">
+    <div>
+        <div class="muted" style="font-size:var(--font-xs);text-transform:uppercase;">Recibo</div>
+        <div class="detalle-codigo">{{ orden.codigo }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.4rem;align-items:flex-end;">
+        <span class="badge badge-{{ info.color }} badge-lg">{{ info.emoji }} {{ info.label }}</span>
+        {% if orden.express %}<span class="badge badge-express">⚡ Express</span>{% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="row-between">
+        <div>
+            <div class="orden-cliente" style="font-size:var(--font-lg);">👤 {{ orden.cliente.nombre }}</div>
+            <div class="muted">📞 {{ orden.cliente.telefono }}</div>
+        </div>
+        <a href="/clientes/{{ orden.cliente.id }}" class="btn btn-outline btn-sm">Ver cliente</a>
+    </div>
+</div>
+
+{% if orden.fecha_prometida %}
+<div class="entrega-box {{ 'atrasado' if orden.atrasado }}">
+    <span>🗓️ Prometido para <strong>{{ orden.fecha_prometida | fecha }}</strong></span>
+    {% if orden.atrasado %}<span class="badge badge-atrasado">⏰ Atrasado</span>{% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-title">🧺 Detalle</div>
+    <table class="items-table">
+        <thead>
+            <tr><th>Prenda / servicio</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Subtotal</th></tr>
+        </thead>
+        <tbody>
+        {% for it in orden.items %}
+        {% set uu = it.unidad | unidad %}
+        <tr>
+            <td>{{ it.descripcion }}</td>
+            <td class="num">{{ it.cantidad | cantidad }}{% if uu %} {{ uu }}{% endif %}</td>
+            <td class="num">{{ it.precio_unit | bs }}{% if uu %}<span class="muted">/{{ uu }}</span>{% endif %}</td>
+            <td class="num">{{ it.subtotal | bs }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            {% if orden.descuento or orden.recargo %}
+            <tr class="sub"><td colspan="3">Subtotal</td><td class="num">{{ orden.subtotal_items | bs }}</td></tr>
+            {% endif %}
+            {% if orden.descuento %}
+            <tr class="sub"><td colspan="3">Descuento</td><td class="num">−{{ orden.descuento | bs }}</td></tr>
+            {% endif %}
+            {% if orden.recargo %}
+            <tr class="sub"><td colspan="3">Recargo</td><td class="num">+{{ orden.recargo | bs }}</td></tr>
+            {% endif %}
+            <tr><td colspan="3">Total</td><td class="num">{{ orden.total | bs }}</td></tr>
+        </tfoot>
+    </table>
+    {% if orden.ajuste_motivo %}
+    <p class="muted mt" style="font-size:var(--font-sm);">Motivo: {{ orden.ajuste_motivo }}</p>
+    {% endif %}
+
+    <div class="pago-box mt">
+        <div class="pago-line"><span>Total</span><strong>{{ orden.total | bs }}</strong></div>
+        <div class="pago-line"><span>Abonado</span><strong>{{ orden.monto_pagado | bs }}</strong></div>
+        {% if orden.saldo > 0 %}
+        <div class="pago-line saldo"><span>Saldo</span><strong>{{ orden.saldo | bs }}</strong></div>
+        {% endif %}
+
+        <div class="mt">
+        {% if orden.pagado %}
+            <span class="badge badge-pago pagado">✅ Pagado</span>
+        {% elif orden.pago_parcial %}
+            <span class="badge badge-pago parcial">🟡 Seña · falta {{ orden.saldo | bs }}</span>
+        {% else %}
+            <span class="badge badge-pago">⏳ Pendiente de pago</span>
+        {% endif %}
+        </div>
+
+        {% if orden.saldo > 0 %}
+        <form method="post" action="/ordenes/{{ orden.id }}/pago" class="pago-form mt">
+            {{ csrf_input(request) }}
+            <input type="number" name="monto" min="0" step="0.5" inputmode="decimal" placeholder="Monto Bs" class="input">
+            <button name="accion" value="agregar" class="btn btn-outline btn-sm">Registrar pago</button>
+            <button name="accion" value="saldar" class="btn btn-success btn-sm">✅ Saldar todo</button>
+        </form>
+        {% else %}
+        <form method="post" action="/ordenes/{{ orden.id }}/pago" class="mt">
+            {{ csrf_input(request) }}
+            <button name="accion" value="reset" class="btn btn-outline btn-sm">Deshacer pago</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if orden.notas %}
+    <p class="mt"><strong>Notas:</strong> {{ orden.notas }}</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-title">🔄 Cambiar estado</div>
+    <form method="post" action="/ordenes/{{ orden.id }}/estado">
+        {{ csrf_input(request) }}
+        <div class="estado-botones">
+            {% for key in ESTADOS_FLUJO %}
+            {% set e = ESTADOS[key] %}
+            <button name="estado" value="{{ key }}"
+                    class="btn {{ 'btn-primary' if key == orden.estado else 'btn-outline' }}"
+                    {{ 'disabled' if key == orden.estado }}>{{ e.emoji }} {{ e.label }}</button>
+            {% endfor %}
+        </div>
+    </form>
+</div>
+
+<a href="{{ wa_link }}" target="_blank" rel="noopener" class="btn btn-wa btn-lg btn-full mt">
+    📲 Enviar detalle por WhatsApp
+</a>
+
+<div class="form-row mt">
+    <a href="/ordenes/{{ orden.id }}/editar" class="btn btn-outline">✏️ Editar pedido</a>
+    <form method="post" action="/ordenes/{{ orden.id }}/eliminar" data-confirm="¿Eliminar este pedido? No se puede deshacer.">
+        {{ csrf_input(request) }}
+        <button class="btn btn-danger btn-full">🗑️ Eliminar</button>
+    </form>
+</div>
+
+<p class="muted mt" style="font-size:var(--font-xs);">
+    Ingresó el {{ orden.fecha_ingreso | fechahora }}{% if orden.creador %} · Cargado por {{ orden.creador.nombre }}{% endif %}
+</p>
+{% endblock %}

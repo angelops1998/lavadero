@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Personal — LavaApp{% endblock %}
+
+{% block content %}
+<a href="/admin" class="back-link">← Panel</a>
+<div class="page-head">
+    <h1>👷 Personal</h1>
+    <a href="/admin/usuarios/nuevo" class="btn btn-primary">➕ Nuevo</a>
+</div>
+
+<div class="list-simple">
+    {% for u in usuarios %}
+    <div class="list-item" style="{{ 'opacity:.6;' if not u.is_active }}">
+        <div class="li-main">
+            <div class="li-title">{{ u.nombre }}
+                <span class="badge {{ 'badge-verde' if u.es_admin else 'badge-gris' }}">{{ 'Admin' if u.es_admin else 'Encargado' }}</span>
+                {% if not u.is_active %}<span class="muted">(inactivo)</span>{% endif %}
+            </div>
+            <div class="li-sub">usuario: {{ u.usuario }}</div>
+        </div>
+        <a href="/admin/usuarios/{{ u.id }}/editar" class="btn btn-outline btn-sm">Editar</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

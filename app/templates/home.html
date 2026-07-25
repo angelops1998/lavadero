@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}LavaApp — Lavandería{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero-emoji">🧺</div>
+    <h1>Tu ropa, siempre ubicada</h1>
+    <p>Consultá el estado de tu pedido con el código de tu recibo. Te avisamos cuando esté lista para retirar.</p>
+    <div class="hero-actions">
+        <a href="/consultar" class="btn btn-primary btn-lg btn-full">🔍 Consultar mi pedido</a>
+        <a href="/auth/login" class="btn btn-outline btn-full">Soy del personal — ingresar</a>
+    </div>
+</div>
+{% endblock %}

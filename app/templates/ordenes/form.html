@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar pedido' if orden else 'Nuevo pedido' }} — LavaApp{% endblock %}
+
+{% block content %}
+<a href="{{ '/ordenes/' ~ orden.id if orden else '/ordenes' }}" class="back-link">← Volver</a>
+<div class="page-head"><h1>{{ 'Editar pedido' if orden else 'Nuevo pedido' }}</h1></div>
+
+{% if errores %}
+<div class="alert alert-error">
+    <span class="alert-icon">⚠</span>
+    <ul>{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" action="{{ '/ordenes/' ~ orden.id ~ '/editar' if orden else '/ordenes' }}">
+    {{ csrf_input(request) }}
+
+    <div class="card">
+        <div class="card-title">👤 Cliente</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cliente_nombre">Nombre</label>
+                <input type="text" id="cliente_nombre" name="cliente_nombre" required
+                       value="{{ form.cliente_nombre if form else '' }}" placeholder="Nombre y apellido">
+            </div>
+            <div class="form-group">
+                <label for="cliente_telefono">Teléfono (WhatsApp)</label>
+                <input type="tel" id="cliente_telefono" name="cliente_telefono" required inputmode="tel"
+                       value="{{ form.cliente_telefono if form else '' }}" placeholder="Ej: 71234567">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🧺 Prendas y servicios</div>
+        <p class="muted mb" style="font-size:var(--font-sm);">Buscá un servicio y tocalo para agregarlo. Podés sumar todos los que quieras. El total se calcula solo.</p>
+        <div class="serv-search" id="serv-search">
+            <span class="serv-search-ico" aria-hidden="true">🔍</span>
+            <input type="text" id="serv-input" class="input serv-input" autocomplete="off"
+                   role="combobox" aria-autocomplete="list" aria-expanded="false"
+                   aria-controls="serv-list" aria-label="Buscar servicio"
+                   placeholder="Buscá: lavado, planchado, edredón…">
+            <ul class="serv-list" id="serv-list" role="listbox" hidden></ul>
+        </div>
+
+        <div id="items-container"></div>
+
+        <button type="button" class="btn btn-outline btn-full" id="add-manual">➕ Agregar otra prenda</button>
+
+        <div class="ajustes">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="descuento">Descuento (Bs)</label>
+                    <input type="number" id="descuento" name="descuento" min="0" step="0.5" inputmode="decimal"
+                           value="{{ (form.descuento or '') if form else '' }}" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="recargo">Recargo (Bs)</label>
+                    <input type="number" id="recargo" name="recargo" min="0" step="0.5" inputmode="decimal"
+                           value="{{ (form.recargo or '') if form else '' }}" placeholder="0">
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="ajuste_motivo">Motivo del descuento/recargo (opcional)</label>
+                <input type="text" id="ajuste_motivo" name="ajuste_motivo"
+                       value="{{ form.ajuste_motivo if form else '' }}"
+                       placeholder="Ej: cliente frecuente, recargo por urgencia…">
+            </div>
+        </div>
+
+        <div class="total-live">
+            <span class="lbl">Total</span>
+            <span class="val" id="total-live">Bs 0,00</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📅 Entrega</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="fecha_prometida">Fecha prometida (opcional)</label>
+                <input type="date" id="fecha_prometida" name="fecha_prometida"
+                       value="{{ form.fecha_prometida if form else '' }}">
+            </div>
+            <div class="form-group check-row" style="align-self:flex-end;margin-bottom:1rem;">
+                <input type="checkbox" id="express" name="express" {{ 'checked' if form and form.express }}>
+                <label for="express">⚡ Servicio express (prioridad)</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">💵 Pago</div>
+        <div class="form-group check-row">
+            <input type="checkbox" id="pago_total" name="pago_total" {{ 'checked' if form and form.pago_total }}>
+            <label for="pago_total">Pagó el total</label>
+        </div>
+        <div class="form-group" id="sena-group" style="margin-bottom:0;">
+            <label for="sena">…o dejó una seña / adelanto (Bs)</label>
+            <input type="number" id="sena" name="sena" min="0" step="0.5" inputmode="decimal"
+                   value="{{ (form.sena or '') if form else '' }}" placeholder="0">
+            <small>Dejalo en blanco si todavía no pagó nada.</small>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="form-group" style="margin-bottom:0;">
+            <label for="notas">Notas (opcional)</label>
+            <textarea id="notas" name="notas" placeholder="Ej: mancha en el cuello, botón flojo…">{{ form.notas if form else '' }}</textarea>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <a href="{{ '/ordenes/' ~ orden.id if orden else '/ordenes' }}" class="btn btn-ghost">Cancelar</a>
+        <button type="submit" class="btn btn-primary">{{ '💾 Guardar' if orden else '✅ Crear pedido' }}</button>
+    </div>
+</form>
+
+<script type="application/json" id="servicios-data">[
+{%- for s in servicios -%}
+{% if not loop.first %},{% endif %}{"id": {{ s.id }}, "nombre": {{ s.nombre | tojson }}, "precio": "{{ s.precio }}", "unidad": "{{ s.unidad }}"}
+{%- endfor -%}
+]</script>
+<script type="application/json" id="items-data">[
+{%- for it in form_items -%}
+{% if not loop.first %},{% endif %}{"descripcion": {{ it.descripcion | tojson }}, "cantidad": "{{ it.cantidad }}", "unidad": "{{ it.unidad or 'prenda' }}", "precio": "{{ it.precio_unit }}", "servicio_id": "{{ it.servicio_id if it.servicio_id is not none else '' }}"}
+{%- endfor -%}
+]</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/orden-form.js"></script>
+{% endblock %}

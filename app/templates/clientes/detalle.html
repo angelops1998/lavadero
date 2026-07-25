@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nombre }} — LavaApp{% endblock %}
+
+{% block content %}
+<a href="/clientes" class="back-link">← Clientes</a>
+
+<div class="page-head">
+    <div>
+        <h1>👤 {{ cliente.nombre }}{{ ' (inactivo)' if not cliente.activo else '' }}</h1>
+        <div class="page-sub">📞 {{ cliente.telefono }}</div>
+    </div>
+    <div class="row-actions">
+        <a href="/clientes/{{ cliente.id }}/editar" class="btn btn-outline">✏️ Editar</a>
+        {% if cliente.activo %}
+        <form method="post" action="/clientes/{{ cliente.id }}/desactivar"
+              onsubmit="return confirm('¿Desactivar a {{ cliente.nombre }}? Ya no aparecerá en la lista de clientes activos.');">
+            <button type="submit" class="btn btn-danger">🗑️ Desactivar</button>
+        </form>
+        {% else %}
+        <form method="post" action="/clientes/{{ cliente.id }}/reactivar">
+            <button type="submit" class="btn btn-outline">♻️ Reactivar</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if cliente.notas %}
+<div class="card mb"><strong>Notas:</strong> {{ cliente.notas }}</div>
+{% endif %}
+
+<div class="row-between mb">
+    <h2 style="font-size:var(--font-xl);">Pedidos ({{ cliente.ordenes | length }})</h2>
+    <a href="/ordenes/nueva" class="btn btn-primary btn-sm">➕ Nuevo pedido</a>
+</div>
+
+{% if cliente.ordenes %}
+<div class="orden-list">
+    {% for orden in cliente.ordenes %}
+    {% include "ordenes/_card.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty"><span class="big">🧺</span><p>Este cliente todavía no tiene pedidos.</p></div>
+{% endif %}
+{% endblock %}

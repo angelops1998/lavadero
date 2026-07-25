@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Pedidos — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Pedidos</h1>
+    <a href="/ordenes/nueva" class="btn btn-primary">➕ Nuevo</a>
+</div>
+
+<form method="get" action="/ordenes" class="search-bar">
+    {% if estado_sel %}<input type="hidden" name="estado" value="{{ estado_sel }}">{% endif %}
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por código, cliente o teléfono…">
+    <button type="submit" class="btn btn-outline">Buscar</button>
+</form>
+
+<div class="chips">
+    <a href="/ordenes{{ '?q=' + q|urlencode if q }}" class="chip {{ 'active' if not estado_sel }}">Todos</a>
+    {% for key, info in ESTADOS.items() %}
+    <a href="/ordenes?estado={{ key }}{{ '&q=' + q|urlencode if q }}" class="chip {{ 'active' if estado_sel == key }}">{{ info.emoji }} {{ info.label }}</a>
+    {% endfor %}
+</div>
+
+{% if ordenes %}
+<div class="orden-list">
+    {% for orden in ordenes %}
+    {% include "ordenes/_card.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <span class="big">🧺</span>
+    <p>No hay pedidos {{ 'con ese filtro' if estado_sel or q else 'todavía' }}.</p>
+    <a href="/ordenes/nueva" class="btn btn-primary mt">➕ Cargar un pedido</a>
+</div>
+{% endif %}
+{% endblock %}

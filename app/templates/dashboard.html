@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Inicio — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Hola, {{ user.nombre.split(' ')[0] }} 👋</h1>
+        <div class="page-sub">Resumen de la lavandería</div>
+    </div>
+    <a href="/ordenes/nueva" class="btn btn-primary btn-lg">➕ Nuevo pedido</a>
+</div>
+
+{% if sin_retirar %}
+<div class="alerta-retiro">
+    <div class="alerta-retiro-head">
+        <span class="ico">🔔</span>
+        <div>
+            <strong>{{ sin_retirar|length }} pedido{{ 's' if sin_retirar|length != 1 }} sin retirar</strong>
+            <div class="muted" style="font-size:var(--font-sm);">Listos hace más de {{ dias_alerta }} día{{ 's' if dias_alerta != 1 }}</div>
+        </div>
+    </div>
+    <div class="alerta-retiro-list">
+        {% for o in sin_retirar %}
+        <a href="/ordenes/{{ o.id }}" class="alerta-item">
+            <span class="orden-codigo">{{ o.codigo }}</span>
+            <span class="nom">👤 {{ o.cliente.nombre }}</span>
+            <span class="muted">listo {{ o.fecha_listo | fecha }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="stat-grid">
+    <a href="/ordenes?estado=recibido" class="stat">
+        <div class="stat-num">{{ conteos.recibido }}</div>
+        <div class="stat-label">📥 Recibidos</div>
+    </a>
+    <a href="/ordenes?estado=en_proceso" class="stat">
+        <div class="stat-num">{{ conteos.en_proceso }}</div>
+        <div class="stat-label">🧺 En proceso</div>
+    </a>
+    <a href="/ordenes?estado=listo" class="stat destacado">
+        <div class="stat-num">{{ conteos.listo }}</div>
+        <div class="stat-label">✅ Listos para retirar</div>
+    </a>
+    <a href="/ordenes?estado=entregado" class="stat">
+        <div class="stat-num">{{ conteos.entregado }}</div>
+        <div class="stat-label">📦 Entregados</div>
+    </a>
+</div>
+
+<div class="row-between mb">
+    <h2 style="font-size:var(--font-xl);">Pedidos activos</h2>
+    <a href="/ordenes" class="nav-link">Ver todos →</a>
+</div>
+
+{% if activos %}
+<div class="orden-list">
+    {% for orden in activos %}
+    {% include "ordenes/_card.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <span class="big">🫧</span>
+    <p>No hay pedidos activos.</p>
+    <a href="/ordenes/nueva" class="btn btn-primary mt">➕ Cargar el primer pedido</a>
+</div>
+{% endif %}
+{% endblock %}

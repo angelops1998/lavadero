@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Estado de tu pedido — LavaApp{% endblock %}
+
+{% block content %}
+<div class="consulta-result">
+    <a href="/consultar" class="back-link">← Nueva consulta</a>
+
+    {% if no_encontrado %}
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2.6rem;">🤔</div>
+        <h2 class="mt">No encontramos ningún pedido</h2>
+        <p class="muted mt">Revisá que el código «<strong>{{ busqueda }}</strong>» esté bien escrito,
+           o probá buscar por tu número de teléfono.</p>
+        <a href="/consultar" class="btn btn-primary mt">Intentar de nuevo</a>
+    </div>
+    {% else %}
+        {% for orden in ordenes %}
+        {% set info = orden.estado_info %}
+        <div class="result-estado {{ info.color }}">
+            <div class="big">{{ info.emoji }}</div>
+            <div class="txt">{{ info.label }}</div>
+            {% if orden.estado == 'listo' %}
+            <div class="sub">¡Ya podés pasar a retirar tu ropa! 🎉</div>
+            {% elif orden.estado == 'entregado' %}
+            <div class="sub">Este pedido ya fue entregado.</div>
+            {% else %}
+            <div class="sub">Te avisaremos cuando esté lista.</div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="row-between mb">
+                <div>
+                    <div class="muted" style="font-size:var(--font-xs);text-transform:uppercase;">Recibo</div>
+                    <div class="orden-codigo">{{ orden.codigo }}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="muted" style="font-size:var(--font-xs);text-transform:uppercase;">Ingresó</div>
+                    <div>{{ orden.fecha_ingreso | fecha }}</div>
+                </div>
+            </div>
+
+            {% if orden.fecha_prometida and orden.estado not in ['listo', 'entregado'] %}
+            <p class="mt muted">🗓️ Estimado para el <strong>{{ orden.fecha_prometida | fecha }}</strong></p>
+            {% endif %}
+
+            <table class="items-table">
+                <tbody>
+                {% for it in orden.items %}
+                <tr>
+                    <td>{{ it.cantidad | cantidad }} × {{ it.descripcion }}</td>
+                    <td class="num">{{ it.subtotal | bs }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                <tr><td>Total</td><td class="num">{{ orden.total | bs }}</td></tr>
+                </tfoot>
+            </table>
+
+            {% if orden.pago_parcial %}
+            <p class="mt"><span class="tag-pendiente">Abonaste {{ orden.monto_pagado | bs }} · Saldo {{ orden.saldo | bs }}</span></p>
+            {% elif not orden.pagado %}
+            <p class="tag-pendiente mt">Pendiente de pago</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}
