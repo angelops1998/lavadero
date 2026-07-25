@@ -1,0 +1,46 @@
+# systemd unit para LavaApp (lavandería).
+# Instalación (en el VPS, como root):
+#   sudo cp deploy/lavanderia.service /etc/systemd/system/lavanderia.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now lavanderia
+#   sudo systemctl status lavanderia
+#
+# Supone:
+#   - Código en /opt/lavanderia  (git clone del repo, directo, sin subcarpeta)
+#   - virtualenv en /opt/lavanderia/.venv
+#   - usuario del sistema 'lavanderia' (sin login), dueño de /opt/lavanderia
+#   - .env presente en /opt/lavanderia/.env (chmod 600), ver .env.example
+
+[Unit]
+Description=LavaApp - Sistema de pedidos para lavanderia (FastAPI)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=lavanderia
+Group=lavanderia
+WorkingDirectory=/opt/lavanderia
+EnvironmentFile=/opt/lavanderia/.env
+
+# Gunicorn con workers Uvicorn (ASGI). Escucha solo en localhost;
+# nginx hace de reverse proxy.
+ExecStart=/opt/lavanderia/.venv/bin/gunicorn app.main:app \
+    --workers 2 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 127.0.0.1:8002 \
+    --timeout 120 \
+    --access-logfile - \
+    --error-logfile -
+
+Restart=on-failure
+RestartSec=5
+
+# Endurecimiento básico
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
