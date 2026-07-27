@@ -297,10 +297,10 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 }
 
 /* ── Tablero (stats) ────────────────────────────────────────── */
-.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.3rem; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-bottom: 1.3rem; }
 .stat {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 1rem; box-shadow: var(--shadow); display: block; min-width: 0;
+    padding: 1.1rem 1rem; box-shadow: var(--shadow); display: block; min-width: 0;
 }
 .stat:hover { text-decoration: none; border-color: var(--primary); }
 .stat-num { font-size: var(--font-2xl); font-weight: 800; color: var(--text); line-height: 1.15; word-break: break-word; }
