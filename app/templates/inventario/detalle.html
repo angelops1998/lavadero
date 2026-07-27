@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ insumo.nombre }} — LavaApp{% endblock %}
+
+{% block content %}
+<a href="/inventario" class="back-link">← Insumos</a>
+
+<div class="page-head">
+    <div>
+        <h1>🧴 {{ insumo.nombre }}{{ ' (oculto)' if not insumo.activo else '' }}</h1>
+        <div class="page-sub">
+            {% if insumo.stock_minimo > 0 %}Mínimo {{ insumo.stock_minimo | cantidad }} {{ insumo.unidad_abrev }}{% else %}Sin mínimo definido{% endif %}
+            {% if user.es_admin and insumo.costo_unit > 0 %} · {{ insumo.costo_unit | bs }} c/u · valor {{ insumo.valor | bs }}{% endif %}
+        </div>
+    </div>
+    {% if user.es_admin %}
+    <div class="row-actions">
+        <a href="/inventario/{{ insumo.id }}/editar" class="btn btn-outline">✏️ Editar</a>
+        <form method="post" action="/inventario/{{ insumo.id }}/toggle">
+            {{ csrf_input(request) }}
+            <button class="btn btn-ghost">{{ '🙈 Ocultar' if insumo.activo else '♻️ Mostrar' }}</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<div class="stock-box {{ insumo.nivel }}">
+    <div>
+        <div class="stock-label">Stock actual</div>
+        <div class="stock-num">{{ insumo.stock | cantidad }} {{ insumo.unidad_abrev }}</div>
+    </div>
+    {% if insumo.nivel == 'sin_stock' %}
+    <span class="badge badge-rojo">⛔ Sin stock</span>
+    {% elif insumo.nivel == 'bajo' %}
+    <span class="badge badge-ambar">⚠️ Hay que reponer</span>
+    {% else %}
+    <span class="badge badge-verde">✅ En orden</span>
+    {% endif %}
+</div>
+
+{% if insumo.notas %}
+<div class="card mb"><strong>Notas:</strong> {{ insumo.notas }}</div>
+{% endif %}
+
+<form method="post" action="/inventario/{{ insumo.id }}/movimiento" class="card" id="movForm">
+    {{ csrf_input(request) }}
+    <div class="card-title">Registrar movimiento</div>
+
+    <div class="mov-tipos">
+        <label class="chip active"><input type="radio" name="tipo" value="entrada" checked> 📥 Entrada</label>
+        <label class="chip"><input type="radio" name="tipo" value="salida"> 📤 Salida</label>
+        <label class="chip"><input type="radio" name="tipo" value="ajuste"> 🔧 Conteo</label>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="cantidad" id="labelCantidad">Cuánto entró{% if insumo.unidad_abrev %} ({{ insumo.unidad_abrev }}){% endif %}</label>
+            <input type="number" id="cantidad" name="cantidad" inputmode="decimal" min="0" step="0.01" required
+                   placeholder="0">
+            <small id="ayudaCantidad">Lo que se sumó al estante.</small>
+        </div>
+        <div class="form-group" id="grupoCosto">
+            <label for="costo_total">Costo total (Bs)</label>
+            <input type="number" id="costo_total" name="costo_total" inputmode="decimal" min="0" step="0.5"
+                   placeholder="opcional">
+            <small>Lo que pagaste por esta compra. Recalcula el costo por unidad.</small>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="motivo">Motivo o nota</label>
+        <input type="text" id="motivo" name="motivo" maxlength="200"
+               placeholder="Ej: compra en el mayorista">
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full">💾 Guardar movimiento</button>
+</form>
+
+<div class="card">
+    <div class="card-title">🕘 Movimientos</div>
+    {% if movimientos %}
+    <table class="items-table">
+        <thead>
+            <tr><th>Fecha</th><th>Movimiento</th><th class="num">Cant.</th><th class="num">Quedó</th></tr>
+        </thead>
+        <tbody>
+            {% for m in movimientos %}
+            <tr>
+                <td>
+                    {{ m.fecha | fecha }}
+                    <div class="muted" style="font-size:var(--font-xs);">{{ m.usuario.nombre if m.usuario else '—' }}</div>
+                </td>
+                <td>
+                    {{ m.tipo_info.emoji }} {{ m.tipo_info.label }}
+                    {% if m.motivo %}<div class="muted" style="font-size:var(--font-xs);">{{ m.motivo }}</div>{% endif %}
+                    {% if user.es_admin and m.costo_total %}<div class="muted" style="font-size:var(--font-xs);">Pagado {{ m.costo_total | bs }}</div>{% endif %}
+                </td>
+                <td class="num">
+                    <span class="mov-delta {{ 'pos' if m.entra else 'neg' }}">
+                        {{ '+' if m.entra else '−' }}{{ m.cantidad_abs | cantidad }}
+                    </span>
+                </td>
+                <td class="num">{{ m.stock_resultante | cantidad }} {{ insumo.unidad_abrev }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="muted">Todavía no hay movimientos de este insumo.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// El formulario de movimiento cambia según el tipo: en una compra se pregunta
+// cuánto se pagó; en un conteo, cuánto hay realmente en el estante.
+(function () {
+    const form = document.getElementById('movForm');
+    if (!form) return;
+    const label = document.getElementById('labelCantidad');
+    const ayuda = document.getElementById('ayudaCantidad');
+    const costo = document.getElementById('grupoCosto');
+    const unidad = {{ ((' (' ~ insumo.unidad_abrev ~ ')') if insumo.unidad_abrev else '') | tojson }};
+
+    const TEXTOS = {
+        entrada: ['Cuánto entró', 'Lo que se sumó al estante.'],
+        salida:  ['Cuánto salió', 'Lo que se usó, se rompió o se perdió.'],
+        ajuste:  ['Cuánto hay realmente', 'Contá lo que ves en el estante: el stock pasa a ser ese número.'],
+    };
+
+    function actualizar() {
+        const tipo = form.querySelector('input[name="tipo"]:checked').value;
+        label.textContent = TEXTOS[tipo][0] + unidad;
+        ayuda.textContent = TEXTOS[tipo][1];
+        costo.style.display = tipo === 'entrada' ? '' : 'none';
+        form.querySelectorAll('.mov-tipos .chip').forEach(function (chip) {
+            chip.classList.toggle('active', chip.querySelector('input').checked);
+        });
+    }
+
+    form.querySelectorAll('input[name="tipo"]').forEach(function (radio) {
+        radio.addEventListener('change', actualizar);
+    });
+    actualizar();
+})();
+</script>
+{% endblock %}

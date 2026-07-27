@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar insumo' if insumo else 'Nuevo insumo' }} — LavaApp{% endblock %}
+
+{% block content %}
+<a href="{{ '/inventario/' ~ insumo.id if insumo else '/inventario' }}" class="back-link">← {{ insumo.nombre if insumo else 'Insumos' }}</a>
+<div class="page-head"><h1>{{ 'Editar insumo' if insumo else 'Nuevo insumo' }}</h1></div>
+
+{% if error %}
+<div class="alert alert-error"><span class="alert-icon">⚠</span><span>{{ error }}</span></div>
+{% endif %}
+
+<form method="post" action="{{ '/inventario/' ~ insumo.id ~ '/editar' if insumo else '/inventario' }}">
+    {{ csrf_input(request) }}
+    <div class="card">
+        <div class="form-group">
+            <label for="nombre">Nombre del insumo</label>
+            <input type="text" id="nombre" name="nombre" required autofocus maxlength="120"
+                   value="{{ insumo.nombre if insumo else '' }}"
+                   placeholder="Ej: Detergente líquido">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="unidad">Se cuenta por</label>
+                {% set u = insumo.unidad if insumo else 'unidad' %}
+                <select id="unidad" name="unidad">
+                    {% for clave, info in unidades.items() %}
+                    <option value="{{ clave }}" {{ 'selected' if u == clave }}>{{ info.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if not insumo %}
+            <div class="form-group">
+                <label for="stock">Stock inicial</label>
+                <input type="number" id="stock" name="stock" inputmode="decimal" min="0" step="0.01"
+                       value="0" placeholder="0">
+                <small>Lo que hay hoy en el estante.</small>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="stock_minimo">Avisar cuando baje de</label>
+                <input type="number" id="stock_minimo" name="stock_minimo" inputmode="decimal" min="0" step="0.01"
+                       value="{{ insumo.stock_minimo if insumo else '' }}" placeholder="0">
+                <small>Aparece en el tablero cuando el stock llega a este número. 0 = sin aviso.</small>
+            </div>
+            <div class="form-group">
+                <label for="costo_unit">Costo por unidad (Bs)</label>
+                <input type="number" id="costo_unit" name="costo_unit" inputmode="decimal" min="0" step="0.5"
+                       value="{{ insumo.costo_unit if insumo else '' }}" placeholder="0.00">
+                <small>Referencia para valorizar el stock. Se actualiza sola con cada compra.</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="notas">Notas</label>
+            <input type="text" id="notas" name="notas" maxlength="200"
+                   value="{{ insumo.notas or '' if insumo else '' }}"
+                   placeholder="Ej: se compra en el mayorista de la Uyustus">
+        </div>
+    </div>
+
+    {% if insumo %}
+    <p class="muted mb">El stock no se edita acá: se cambia con entradas, salidas o un ajuste por conteo,
+        para que quede el historial.</p>
+    {% endif %}
+
+    <div class="action-bar">
+        <a href="{{ '/inventario/' ~ insumo.id if insumo else '/inventario' }}" class="btn btn-ghost">Cancelar</a>
+        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+    </div>
+</form>
+{% endblock %}

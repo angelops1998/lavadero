@@ -28,6 +28,36 @@
         </a>
         {% endfor %}
     </div>
+    <a href="/inventario/custodia" class="link-muted" style="display:inline-block;margin-top:.7rem;">
+        Ver toda la ropa que hay en el local →
+    </a>
+</div>
+{% endif %}
+
+{% if insumos_bajos %}
+<div class="alerta-retiro">
+    <div class="alerta-retiro-head">
+        <span class="ico">🧴</span>
+        <div>
+            <strong>{{ insumos_bajos|length }} insumo{{ 's' if insumos_bajos|length != 1 }} por reponer</strong>
+            <div class="muted" style="font-size:var(--font-sm);">Se está por acabar lo que usás para trabajar</div>
+        </div>
+    </div>
+    <div class="alerta-retiro-list">
+        {# Solo los primeros: el tablero no puede convertirse en la lista de compras entera. #}
+        {% for i in insumos_bajos[:6] %}
+        <a href="/inventario/{{ i.id }}" class="alerta-item">
+            <span class="nom">{{ i.nombre }}</span>
+            <span class="muted">
+                {% if i.nivel == 'sin_stock' %}⛔ sin stock
+                {% else %}quedan {{ i.stock | cantidad }} {{ i.unidad_abrev }} (mínimo {{ i.stock_minimo | cantidad }}){% endif %}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    <a href="/inventario?filtro=reponer" class="link-muted" style="display:inline-block;margin-top:.7rem;">
+        {% if insumos_bajos|length > 6 %}Ver los {{ insumos_bajos|length }} insumos por reponer →{% else %}Ir al inventario →{% endif %}
+    </a>
 </div>
 {% endif %}
 

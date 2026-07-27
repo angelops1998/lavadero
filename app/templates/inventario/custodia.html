@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Ropa en el local — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>🧺 Ropa en el local</h1>
+        <div class="page-sub">Todo lo que todavía no se entregó</div>
+    </div>
+</div>
+
+{% include "inventario/_tabs.html" %}
+
+<div class="stat-grid">
+    <a href="/ordenes" class="stat">
+        <div class="stat-num">{{ en_local }}</div>
+        <div class="stat-label">🧾 Pedidos en el local</div>
+    </a>
+    <a href="/ordenes?estado=listo" class="stat destacado">
+        <div class="stat-num">{{ listos }}</div>
+        <div class="stat-label">✅ Listos esperando retiro</div>
+    </a>
+    <div class="stat">
+        <div class="stat-num {{ 'tag-pendiente' if abandonados }}">{{ abandonados | length }}</div>
+        <div class="stat-label">🕸️ Sin retirar hace +{{ dias_abandono }} días</div>
+    </div>
+</div>
+
+{% if totales %}
+<div class="entrega-box">
+    <span>En total hay
+        {% for t in totales %}<strong>{{ t.cantidad | cantidad }} {{ t.label }}</strong>{{ ' · ' if not loop.last }}{% endfor %}
+        en el local.</span>
+</div>
+{% endif %}
+
+{% if abandonados %}
+<div class="alerta-retiro">
+    <div class="alerta-retiro-head">
+        <span class="ico">🕸️</span>
+        <div>
+            <strong>{{ abandonados|length }} pedido{{ 's' if abandonados|length != 1 }} que nadie vino a buscar</strong>
+            <div class="muted" style="font-size:var(--font-sm);">Listos hace más de {{ dias_abandono }} días</div>
+        </div>
+    </div>
+    <div class="alerta-retiro-list">
+        {% for a in abandonados %}
+        <div class="alerta-item">
+            <a href="/ordenes/{{ a.orden.id }}" class="orden-codigo">{{ a.orden.codigo }}</a>
+            <span class="nom">👤 {{ a.orden.cliente.nombre }}</span>
+            <span class="muted">{{ a.dias }} días · {{ a.orden.saldo | bs }} por cobrar</span>
+            <a href="{{ a.wa }}" target="_blank" rel="noopener" class="btn btn-wa btn-sm">💬 Recordar</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-title">👕 Qué hay guardado</div>
+    {% if resumen %}
+    <table class="items-table">
+        <thead>
+            <tr><th>Prenda / servicio</th><th class="num">Cantidad</th><th class="num">Pedidos</th></tr>
+        </thead>
+        <tbody>
+            {% for r in resumen %}
+            <tr>
+                <td>{{ r.descripcion }}</td>
+                <td class="num">{{ r.cantidad | cantidad }}{% if r.unidad | unidad %} {{ r.unidad | unidad }}{% endif %}</td>
+                <td class="num">{{ r.pedidos }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="muted mt" style="font-size:var(--font-sm);">
+        Sale de los pedidos que no están entregados. Cuando marcás un pedido como
+        <strong>Entregado</strong>, su ropa deja de contar acá.
+    </p>
+    {% else %}
+    <div class="empty">
+        <span class="big">🫧</span>
+        <p>No hay ropa de clientes en el local.</p>
+        <p class="muted">Todos los pedidos están entregados.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

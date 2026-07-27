@@ -24,6 +24,7 @@
                 <a href="/ordenes" class="nav-link {{ 'active' if path.startswith('/ordenes') }}">🧾 Pedidos</a>
                 <a href="/clientes" class="nav-link {{ 'active' if path.startswith('/clientes') }}">👤 Clientes</a>
                 <a href="/servicios" class="nav-link {{ 'active' if path.startswith('/servicios') }}">🏷️ Servicios</a>
+                <a href="/inventario" class="nav-link {{ 'active' if path.startswith('/inventario') }}">📦 Inventario</a>
                 {% if user.es_admin %}
                 <a href="/reportes" class="nav-link {{ 'active' if path.startswith('/reportes') }}">📊 Reportes</a>
                 <a href="/admin" class="nav-link {{ 'active' if path.startswith('/admin') }}">⚙️ Panel</a>

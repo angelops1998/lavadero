@@ -1,0 +1,5 @@
+{# Las dos caras del inventario: lo que se compra y la ropa que está en el local. #}
+<div class="chips">
+    <a href="/inventario" class="chip {{ 'active' if request.url.path == '/inventario' }}">🧴 Insumos</a>
+    <a href="/inventario/custodia" class="chip {{ 'active' if request.url.path == '/inventario/custodia' }}">🧺 Ropa en el local</a>
+</div>

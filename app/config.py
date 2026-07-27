@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     base_url: str = "http://localhost:8000"
     # Días que un pedido puede estar "listo" antes de alertar que no lo retiran.
     dias_alerta_retiro: int = 3
+    # Días desde que está listo para considerar que la ropa quedó abandonada.
+    dias_abandono: int = 30
     # Ancho del papel de la impresora térmica, en mm (58 y 80 son los estándares).
     ticket_ancho_mm: int = 58
 

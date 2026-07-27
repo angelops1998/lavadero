@@ -486,3 +486,34 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 @media (min-width: 640px) {
     .stat-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ── Inventario de insumos ──────────────────────────────────── */
+.badge-rojo { background: var(--error-bg); color: var(--error-text); }
+
+/* Stock en la lista de insumos */
+.inv-stock { font-weight: 800; font-size: var(--font-lg); white-space: nowrap; color: var(--text); }
+.inv-stock.bajo { color: var(--warning-text); }
+.inv-stock.cero { color: var(--error); font-size: var(--font-base); }
+
+/* Stock actual en el detalle */
+.stock-box {
+    display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap;
+    background: var(--bg-card); border: 1.5px solid var(--border-dark);
+    border-left: 6px solid var(--success);
+    border-radius: var(--radius-lg); padding: 1rem 1.1rem; margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+.stock-box.bajo      { border-left-color: var(--warning); background: var(--warning-bg); }
+.stock-box.sin_stock { border-left-color: var(--error); background: var(--error-bg); }
+.stock-label { color: var(--text-muted); font-size: var(--font-sm); font-weight: 700; }
+.stock-num { font-size: var(--font-3xl); font-weight: 800; color: var(--text); line-height: 1.1; }
+
+/* Selector de tipo de movimiento (entrada / salida / conteo) */
+.mov-tipos { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.mov-tipos .chip { cursor: pointer; user-select: none; }
+.mov-tipos .chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+/* Cantidad con signo en el historial */
+.mov-delta { font-weight: 800; }
+.mov-delta.pos { color: var(--success); }
+.mov-delta.neg { color: var(--error); }

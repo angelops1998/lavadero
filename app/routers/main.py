@@ -7,6 +7,7 @@ from ..database import get_db
 from ..config import get_settings
 from ..auth import get_current_user_optional
 from ..models.orden import Orden, ESTADOS_FLUJO
+from ..models.insumo import Insumo
 from ..utils import flash_from_query
 
 router = APIRouter()
@@ -45,6 +46,14 @@ async def home(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
+    # Alerta: insumos sin stock o por debajo del mínimo (el nivel es lógica del
+    # modelo, así que se filtra en Python; son pocos registros).
+    insumos_bajos = [
+        i for i in db.query(Insumo).filter(Insumo.activo == True)  # noqa: E712
+        .order_by(Insumo.nombre).all()
+        if i.necesita_reponer
+    ]
+
     return templates.TemplateResponse(
         request,
         "dashboard.html",
@@ -54,6 +63,7 @@ async def home(request: Request, db: Session = Depends(get_db)):
             "activos": activos,
             "sin_retirar": sin_retirar,
             "dias_alerta": dias,
+            "insumos_bajos": insumos_bajos,
             "messages": flash_from_query(request),
         },
     )

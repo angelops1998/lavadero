@@ -11,6 +11,7 @@ from .routers import (
     ordenes,
     clientes,
     servicios,
+    inventario,
     admin,
     reportes,
 )
@@ -91,5 +92,6 @@ app.include_router(consulta.router)
 app.include_router(ordenes.router)
 app.include_router(clientes.router)
 app.include_router(servicios.router)
+app.include_router(inventario.router)
 app.include_router(admin.router)
 app.include_router(reportes.router)

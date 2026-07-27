@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Insumos — LavaApp{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>📦 Insumos</h1>
+        <div class="page-sub">Stock de lo que se usa para trabajar</div>
+    </div>
+    {% if user.es_admin %}
+    <a href="/inventario/nuevo" class="btn btn-primary">➕ Nuevo</a>
+    {% endif %}
+</div>
+
+{% include "inventario/_tabs.html" %}
+
+<form method="get" action="/inventario" class="search-bar">
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar insumo…">
+    {% if ver_inactivos %}<input type="hidden" name="inactivos" value="1">{% endif %}
+    <button type="submit" class="btn btn-outline">Buscar</button>
+</form>
+
+{% if num_reponer %}
+<div class="chips">
+    <a href="/inventario{{ '?inactivos=1' if ver_inactivos }}"
+       class="chip {{ 'active' if filtro != 'reponer' }}">Todos</a>
+    <a href="/inventario?filtro=reponer{{ '&inactivos=1' if ver_inactivos }}"
+       class="chip {{ 'active' if filtro == 'reponer' }}">⚠️ Hay que reponer ({{ num_reponer }})</a>
+</div>
+{% endif %}
+
+{% if insumos %}
+<div class="list-simple">
+    {% for i in insumos %}
+    <a href="/inventario/{{ i.id }}" class="list-item{{ ' inactivo' if not i.activo }}">
+        <div class="li-main">
+            <div class="li-title">🧴 {{ i.nombre }}{% if not i.activo %} <span class="muted">(oculto)</span>{% endif %}</div>
+            <div class="li-sub">
+                {% if i.stock_minimo > 0 %}Mínimo {{ i.stock_minimo | cantidad }} {{ i.unidad_abrev }}{% else %}Sin mínimo definido{% endif %}
+                {% if user.es_admin and i.costo_unit > 0 %} · {{ i.costo_unit | bs }} c/u{% endif %}
+            </div>
+        </div>
+        <div class="li-actions">
+            <span class="inv-stock {{ 'cero' if i.nivel == 'sin_stock' else ('bajo' if i.nivel == 'bajo' else '') }}">
+                {% if i.nivel == 'sin_stock' %}Sin stock{% else %}{{ i.stock | cantidad }} {{ i.unidad_abrev }}{% endif %}
+            </span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <span class="big">🧴</span>
+    <p>
+        {% if filtro == 'reponer' %}No hay insumos por reponer. 👌
+        {% elif q %}Ningún insumo coincide con esa búsqueda.
+        {% else %}Todavía no cargaste insumos.{% endif %}
+    </p>
+    {% if user.es_admin and not q and filtro != 'reponer' %}
+    <p class="muted">Detergente, suavizante, cloro, bolsas, perchas… lo que se compra y se gasta.</p>
+    <a href="/inventario/nuevo" class="btn btn-primary mt">➕ Agregar insumo</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if user.es_admin %}
+<div class="row-between mt">
+    <a href="/inventario?{{ 'q=' + q + '&' if q }}{{ 'inactivos=1' if not ver_inactivos else '' }}" class="link-muted">
+        {{ 'Ver solo activos' if ver_inactivos else 'Ver ocultos' }}
+    </a>
+    {% if valor_total > 0 %}
+    <span class="muted">Valor del inventario: <strong>{{ valor_total | bs }}</strong></span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
