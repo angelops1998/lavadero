@@ -18,6 +18,15 @@
                    value="{{ servicio.nombre if servicio else '' }}"
                    placeholder="Ej: Lavado y secado x kg">
         </div>
+        <div class="form-group">
+            <label for="categoria">Categoría</label>
+            <input type="text" id="categoria" name="categoria" list="categorias-list"
+                   value="{{ servicio.categoria if servicio else 'Lavandería' }}"
+                   placeholder="Ej: Lavandería">
+            <datalist id="categorias-list">
+                {% for c in categorias %}<option value="{{ c }}">{% endfor %}
+            </datalist>
+        </div>
         <div class="form-row">
             <div class="form-group">
                 <label for="precio">Precio (Bs)</label>

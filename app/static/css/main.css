@@ -435,6 +435,23 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 .list-item .li-actions { display: flex; gap: .4rem; align-items: center; flex-shrink: 0; }
 .li-precio { font-weight: 800; color: var(--text); white-space: nowrap; }
 
+/* ── Categorías de servicios (acordeón) ─────────────────────── */
+.cat-group { margin-bottom: 1.1rem; }
+.cat-group:last-child { margin-bottom: 0; }
+.cat-head {
+    display: flex; align-items: center; gap: .5rem; cursor: pointer; list-style: none;
+    font-weight: 800; font-size: var(--font-lg); color: var(--text);
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: .7rem 1rem; margin-bottom: .6rem; box-shadow: var(--shadow); user-select: none;
+}
+.cat-head::-webkit-details-marker { display: none; }
+.cat-caret { transition: transform .15s ease; flex-shrink: 0; }
+.cat-group:not([open]) .cat-caret { transform: rotate(-90deg); }
+.cat-count {
+    margin-left: auto; font-size: var(--font-sm); font-weight: 700; color: var(--text-muted);
+    background: var(--bg); border-radius: 999px; padding: .1rem .55rem;
+}
+
 .empty { text-align: center; color: var(--text-muted); padding: 2.5rem 1rem; }
 .empty .big { font-size: 2.6rem; display: block; margin-bottom: .5rem; }
 

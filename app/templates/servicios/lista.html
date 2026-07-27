@@ -16,26 +16,34 @@
 <p class="muted mb">Solo un administrador puede editar precios.</p>
 {% endif %}
 
-{% if servicios %}
-<div class="list-simple">
-    {% for s in servicios %}
-    <div class="list-item" style="{{ 'opacity:.6;' if not s.activo }}">
-        <div class="li-main">
-            <div class="li-title">🏷️ {{ s.nombre }} {% if not s.activo %}<span class="muted">(oculto)</span>{% endif %}</div>
-            <div class="li-sub li-precio">{{ s.precio | bs }}</div>
+{% if categorias %}
+{% for cat in categorias %}
+<details class="cat-group" open>
+    <summary class="cat-head">
+        <span class="cat-caret">▾</span> {{ cat.nombre }}
+        <span class="cat-count">{{ cat.servicios | length }}</span>
+    </summary>
+    <div class="list-simple">
+        {% for s in cat.servicios %}
+        <div class="list-item" style="{{ 'opacity:.6;' if not s.activo }}">
+            <div class="li-main">
+                <div class="li-title">🏷️ {{ s.nombre }} {% if not s.activo %}<span class="muted">(oculto)</span>{% endif %}</div>
+                <div class="li-sub li-precio">{{ s.precio | bs }}</div>
+            </div>
+            {% if user.es_admin %}
+            <div class="li-actions">
+                <a href="/servicios/{{ s.id }}/editar" class="btn btn-outline btn-sm">Editar</a>
+                <form method="post" action="/servicios/{{ s.id }}/toggle">
+                    {{ csrf_input(request) }}
+                    <button class="btn btn-ghost btn-sm">{{ 'Ocultar' if s.activo else 'Mostrar' }}</button>
+                </form>
+            </div>
+            {% endif %}
         </div>
-        {% if user.es_admin %}
-        <div class="li-actions">
-            <a href="/servicios/{{ s.id }}/editar" class="btn btn-outline btn-sm">Editar</a>
-            <form method="post" action="/servicios/{{ s.id }}/toggle">
-                {{ csrf_input(request) }}
-                <button class="btn btn-ghost btn-sm">{{ 'Ocultar' if s.activo else 'Mostrar' }}</button>
-            </form>
-        </div>
-        {% endif %}
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
+</details>
+{% endfor %}
 {% else %}
 <div class="empty">
     <span class="big">🏷️</span>
