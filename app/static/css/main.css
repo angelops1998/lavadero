@@ -245,6 +245,7 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 .orden-card.e-en_proceso { border-left-color: var(--warning); }
 .orden-card.e-listo      { border-left-color: var(--success); }
 .orden-card.e-entregado  { border-left-color: #B9CBDC; opacity: .85; }
+.orden-card.e-baja       { border-left-color: #B9CBDC; opacity: .7; }
 .orden-card-top { display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
 .orden-codigo { font-size: var(--font-lg); font-weight: 800; color: var(--text); letter-spacing: .5px; }
 .orden-cliente { font-weight: 700; color: var(--text); }

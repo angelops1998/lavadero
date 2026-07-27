@@ -50,7 +50,34 @@
             <span class="nom">👤 {{ a.orden.cliente.nombre }}</span>
             <span class="muted">{{ a.dias }} días · {{ a.orden.saldo | bs }} por cobrar</span>
             <a href="{{ a.wa }}" target="_blank" rel="noopener" class="btn btn-wa btn-sm">💬 Recordar</a>
+            <form method="post" action="/ordenes/{{ a.orden.id }}/baja"
+                  data-confirm="¿Dar de baja el pedido {{ a.orden.codigo }}? Dejará de contar como custodia activa.">
+                {{ csrf_input(request) }}
+                <button type="submit" class="btn btn-outline btn-sm">🗑️ Dar de baja</button>
+            </form>
         </div>
+        {% endfor %}
+    </div>
+    <p class="muted mt" style="font-size:var(--font-sm);">
+        Para dejar un motivo (ej. "se donó"), entrá al pedido y dalo de baja desde ahí.
+    </p>
+</div>
+{% endif %}
+
+{% if bajas %}
+<div class="card">
+    <div class="card-title">🗑️ Dado de baja recientemente</div>
+    <div class="list-simple">
+        {% for o in bajas %}
+        <a href="/ordenes/{{ o.id }}" class="list-item">
+            <div class="li-main">
+                <div class="li-title">{{ o.codigo }} · {{ o.cliente.nombre }}</div>
+                <div class="li-sub">
+                    {{ o.fecha_baja | fecha }}{% if o.baja_motivo %} · {{ o.baja_motivo }}{% endif %}
+                    {% if o.saldo > 0 %} · <span class="tag-pendiente">{{ o.saldo | bs }} sin cobrar</span>{% endif %}
+                </div>
+            </div>
+        </a>
         {% endfor %}
     </div>
 </div>
@@ -74,14 +101,14 @@
         </tbody>
     </table>
     <p class="muted mt" style="font-size:var(--font-sm);">
-        Sale de los pedidos que no están entregados. Cuando marcás un pedido como
-        <strong>Entregado</strong>, su ropa deja de contar acá.
+        Sale de los pedidos que no están entregados ni dados de baja. Cuando marcás un pedido
+        como <strong>Entregado</strong> o lo <strong>das de baja</strong>, su ropa deja de contar acá.
     </p>
     {% else %}
     <div class="empty">
         <span class="big">🫧</span>
         <p>No hay ropa de clientes en el local.</p>
-        <p class="muted">Todos los pedidos están entregados.</p>
+        <p class="muted">Todos los pedidos están entregados o dados de baja.</p>
     </div>
     {% endif %}
 </div>

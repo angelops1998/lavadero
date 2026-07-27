@@ -117,11 +117,12 @@ async def custodia(request: Request, db: Session = Depends(get_db),
     """Ropa que está en el local: qué hay y qué nadie viene a retirar."""
     dias_abandono = get_settings().dias_abandono
 
-    # Todo lo que sigue en el local = pedidos que aún no se entregaron.
+    # Todo lo que sigue en el local = pedidos que aún no se entregaron NI se dieron
+    # de baja (una vez dada de baja, se deja de rastrear como custodia activa).
     items = (
         db.query(OrdenItem)
         .join(Orden, OrdenItem.orden_id == Orden.id)
-        .filter(Orden.estado != "entregado")
+        .filter(Orden.estado.notin_(["entregado", "baja"]))
         .all()
     )
     agrup = {}
@@ -146,7 +147,7 @@ async def custodia(request: Request, db: Session = Depends(get_db),
         totales.append({"cantidad": cantidad,
                         "label": singular if cantidad == 1 else plural})
 
-    en_local = db.query(Orden).filter(Orden.estado != "entregado").count()
+    en_local = db.query(Orden).filter(Orden.estado.notin_(["entregado", "baja"])).count()
     listos = db.query(Orden).filter(Orden.estado == "listo").count()
 
     # Abandonados: listos hace más de N días y todavía sin retirar.
@@ -163,11 +164,22 @@ async def custodia(request: Request, db: Session = Depends(get_db),
         for o in ordenes
     ]
 
+    # Registro de lo ya dado de baja (para que quede a la vista, no solo en el
+    # historial de cada pedido). Las últimas 20 alcanzan; no es un reporte.
+    bajas = (
+        db.query(Orden)
+        .filter(Orden.estado == "baja")
+        .order_by(Orden.fecha_baja.desc())
+        .limit(20)
+        .all()
+    )
+
     return templates.TemplateResponse(
         request, "inventario/custodia.html",
         {"user": user, "resumen": resumen, "totales": totales,
          "en_local": en_local, "listos": listos, "abandonados": abandonados,
-         "dias_abandono": dias_abandono, "messages": flash_from_query(request)},
+         "bajas": bajas, "dias_abandono": dias_abandono,
+         "messages": flash_from_query(request)},
     )
 
 

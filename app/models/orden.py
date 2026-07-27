@@ -14,6 +14,10 @@ ESTADOS = {
     "en_proceso": {"label": "En proceso",         "color": "ambar", "emoji": "🧺"},
     "listo":      {"label": "Listo para retirar",  "color": "verde", "emoji": "✅"},
     "entregado":  {"label": "Entregado",          "color": "apagado", "emoji": "📦"},
+    # No es parte del flujo normal: es la salida para ropa abandonada que nadie
+    # vino a retirar. Por eso NO está en ESTADOS_FLUJO (no aparece como botón de
+    # "avanzar estado"); se llega ahí solo desde la acción explícita "dar de baja".
+    "baja":       {"label": "Dado de baja",       "color": "apagado", "emoji": "🗑️"},
 }
 # Orden secuencial del flujo (para el botón "avanzar estado").
 ESTADOS_FLUJO = ["recibido", "en_proceso", "listo", "entregado"]
@@ -48,6 +52,9 @@ class Orden(Base):
     fecha_prometida = Column(Date, nullable=True)   # cuándo se prometió tenerlo listo
     fecha_listo = Column(DateTime(timezone=True), nullable=True)
     fecha_entrega = Column(DateTime(timezone=True), nullable=True)
+    # Cuándo y por qué se dio de baja la ropa abandonada (estado='baja').
+    fecha_baja = Column(DateTime(timezone=True), nullable=True)
+    baja_motivo = Column(String(200), nullable=True)
 
     creado_por = Column(Integer, ForeignKey("users.id"), nullable=True)
 
@@ -82,9 +89,13 @@ class Orden(Base):
 
     @property
     def atrasado(self) -> bool:
-        """La fecha prometida ya pasó y el pedido aún no se entregó."""
-        return bool(self.fecha_prometida) and self.estado != "entregado" \
+        """La fecha prometida ya pasó y el pedido aún no se entregó (ni se dio de baja)."""
+        return bool(self.fecha_prometida) and self.estado not in ("entregado", "baja") \
             and self.fecha_prometida < date.today()
+
+    @property
+    def dado_de_baja(self) -> bool:
+        return self.estado == "baja"
 
 
 class OrdenItem(Base):

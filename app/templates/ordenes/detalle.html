@@ -104,6 +104,19 @@
     {% endif %}
 </div>
 
+{% if orden.dado_de_baja %}
+<div class="card">
+    <div class="card-title">🗑️ Dado de baja</div>
+    <p class="muted">
+        {{ orden.fecha_baja | fechahora }}{% if orden.baja_motivo %} · {{ orden.baja_motivo }}{% endif %}
+    </p>
+    <form method="post" action="/ordenes/{{ orden.id }}/estado" class="mt">
+        {{ csrf_input(request) }}
+        <input type="hidden" name="estado" value="listo">
+        <button type="submit" class="btn btn-outline">↩️ Fue un error, volver a "Listo"</button>
+    </form>
+</div>
+{% else %}
 <div class="card">
     <div class="card-title">🔄 Cambiar estado</div>
     <form method="post" action="/ordenes/{{ orden.id }}/estado">
@@ -118,6 +131,25 @@
         </div>
     </form>
 </div>
+
+{% if orden.estado != "entregado" %}
+<div class="card">
+    <div class="card-title">🗑️ Ropa abandonada</div>
+    <p class="muted">Si el cliente nunca vino a retirarla, dala de baja: deja de contar como
+        ropa en el local. {% if orden.saldo > 0 %}El saldo pendiente sigue registrado.{% endif %}</p>
+    <form method="post" action="/ordenes/{{ orden.id }}/baja" class="mt"
+          data-confirm="¿Dar de baja este pedido? La ropa deja de aparecer como custodia activa.">
+        {{ csrf_input(request) }}
+        <div class="form-group">
+            <label for="motivo_baja">Motivo (opcional)</label>
+            <input type="text" id="motivo_baja" name="motivo" maxlength="200"
+                   placeholder="Ej: nadie respondió tras 3 meses, se donó">
+        </div>
+        <button type="submit" class="btn btn-danger">🗑️ Dar de baja</button>
+    </form>
+</div>
+{% endif %}
+{% endif %}
 
 <a href="{{ wa_link }}" target="_blank" rel="noopener" class="btn btn-wa btn-lg btn-full mt">
     📲 Enviar detalle por WhatsApp

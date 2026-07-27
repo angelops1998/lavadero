@@ -352,7 +352,9 @@ async def cambiar_estado(orden_id: int, request: Request, db: Session = Depends(
         return RedirectResponse(url="/ordenes?err=Pedido+no+encontrado", status_code=302)
     form = await request.form()
     nuevo = (form.get("estado") or "").strip()
-    if nuevo in ESTADOS:
+    # "baja" no se llega desde acá: pide un motivo y va por /baja, que además
+    # deja fecha_baja. Este endpoint sirve para revertirla (ej. volver a "listo").
+    if nuevo in ESTADOS and nuevo != "baja":
         orden.estado = nuevo
         ahora = datetime.now(timezone.utc)
         if nuevo == "listo" and not orden.fecha_listo:
@@ -363,6 +365,28 @@ async def cambiar_estado(orden_id: int, request: Request, db: Session = Depends(
     return RedirectResponse(
         url=f"/ordenes/{orden_id}?ok=Estado+actualizado", status_code=302
     )
+
+
+@router.post("/{orden_id}/baja")
+async def dar_de_baja(orden_id: int, request: Request, db: Session = Depends(get_db),
+                      user=Depends(get_current_user)):
+    """Da de baja un pedido con ropa abandonada: deja de contar como custodia
+    activa. No es un estado del flujo normal — es la salida para lo que nadie
+    vino a retirar. No toca el pago: si quedaba un saldo, sigue pendiente."""
+    orden = db.query(Orden).filter(Orden.id == orden_id).first()
+    if not orden:
+        return RedirectResponse(url="/ordenes?err=Pedido+no+encontrado", status_code=302)
+    if orden.estado == "entregado":
+        return RedirectResponse(
+            url=f"/ordenes/{orden_id}?err=Ya+fue+entregado%2C+no+se+puede+dar+de+baja",
+            status_code=302,
+        )
+    form = await request.form()
+    orden.estado = "baja"
+    orden.fecha_baja = datetime.now(timezone.utc)
+    orden.baja_motivo = (form.get("motivo") or "").strip()[:200] or None
+    db.commit()
+    return RedirectResponse(url=f"/ordenes/{orden_id}?ok=Pedido+dado+de+baja", status_code=302)
 
 
 @router.post("/{orden_id}/pago")

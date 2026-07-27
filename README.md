@@ -46,6 +46,9 @@ Los **clientes no tienen cuenta**: consultan su pedido en `/consultar` con el c�
 
 Al enviar el WhatsApp, si el pedido está *Listo* se agrega el aviso para que pase a retirar.
 
+Hay un quinto estado, **Dado de baja**, fuera de ese flujo: es la salida para la ropa
+abandonada que nadie retiró (ver Inventario más abajo).
+
 ## Inventario (`/inventario`)
 
 Son dos cosas distintas, en dos pestañas:
@@ -57,9 +60,17 @@ Son dos cosas distintas, en dos pestañas:
   movimiento queda con fecha, cantidad, saldo resultante y quién lo hizo. Si una entrada
   registra lo que se pagó, se recalcula el costo por unidad.
 - **Ropa en el local** (`/inventario/custodia`): qué prendas hay guardadas ahora mismo,
-  sumadas de los pedidos que todavía no se entregaron, y el listado de la ropa que nadie
-  vino a buscar hace más de `DIAS_ABANDONO` días (con botón para recordarle al cliente por
-  WhatsApp). No es una tabla aparte: sale de los pedidos, así que se mantiene sola.
+  sumadas de los pedidos que todavía no se entregaron ni se dieron de baja, y el listado
+  de la ropa que nadie vino a buscar hace más de `DIAS_ABANDONO` días (con botón para
+  recordarle al cliente por WhatsApp). No es una tabla aparte: sale de los pedidos, así
+  que se mantiene sola.
+
+Cuando la ropa abandonada ya no se va a reclamar (se donó, se descartó…), se puede
+**dar de baja** el pedido — desde su detalle o con un botón directo en la lista de
+abandonados. No es un paso más del flujo (`Recibido → … → Entregado`): es una salida
+aparte para lo que nunca se retiró, con motivo y fecha propios, y se puede revertir si
+fue un error. El saldo pendiente, si lo había, sigue registrado — dar de baja la ropa
+no perdona la deuda.
 
 ## Configuración del negocio (`.env`)
 

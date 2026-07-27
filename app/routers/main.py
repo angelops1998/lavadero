@@ -29,7 +29,7 @@ async def home(request: Request, db: Session = Depends(get_db)):
 
     activos = (
         db.query(Orden)
-        .filter(Orden.estado != "entregado")
+        .filter(Orden.estado.notin_(["entregado", "baja"]))
         .order_by(Orden.fecha_ingreso.desc())
         .limit(12)
         .all()
