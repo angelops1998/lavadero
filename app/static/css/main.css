@@ -536,3 +536,17 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 .mov-delta { font-weight: 800; }
 .mov-delta.pos { color: var(--success); }
 .mov-delta.neg { color: var(--error); }
+
+@media (max-width: 560px) {
+    /* En teléfono las tres opciones van en una sola fila repartida en partes
+       iguales; si no, "Conteo" cae sola a una segunda línea. */
+    .mov-tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+    .mov-tipos .chip { justify-content: center; padding: .5rem .25rem; }
+
+    /* Los botones de acción caen a su propia fila y la reparten en dos: con
+       una base del 40% no entran junto al texto, así que envuelven juntos, y
+       el min-width evita que se aplasten si la fila queda corta. */
+    .alerta-item > .btn, .alerta-item > form { flex: 1 1 40%; min-width: 118px; }
+    .alerta-item > form > .btn { width: 100%; }
+    .alerta-item .btn { min-height: var(--tap); padding-left: .5rem; padding-right: .5rem; }
+}
