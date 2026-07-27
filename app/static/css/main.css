@@ -471,7 +471,7 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 .entrega-box {
     display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap;
     background: var(--bg-soft); border: 1px solid var(--border-dark); border-radius: var(--radius);
-    padding: .7rem 1rem; margin-bottom: 1rem; font-size: var(--font-base); color: var(--text-body);
+    padding: .7rem 1rem; margin: 1rem 0; font-size: var(--font-base); color: var(--text-body);
 }
 .entrega-box.atrasado { background: var(--error-bg); border-color: #f5b5b5; color: var(--error-text); }
 
