@@ -123,6 +123,11 @@
     📲 Enviar detalle por WhatsApp
 </a>
 
+<a href="/ordenes/{{ orden.id }}/ticket?imprimir=1" target="_blank" rel="noopener"
+   class="btn btn-outline btn-lg btn-full mt">
+    🖨️ Imprimir ticket
+</a>
+
 <div class="form-row mt">
     <a href="/ordenes/{{ orden.id }}/editar" class="btn btn-outline">✏️ Editar pedido</a>
     <form method="post" action="/ordenes/{{ orden.id }}/eliminar" data-confirm="¿Eliminar este pedido? No se puede deshacer.">

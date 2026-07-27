@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     base_url: str = "http://localhost:8000"
     # Días que un pedido puede estar "listo" antes de alertar que no lo retiran.
     dias_alerta_retiro: int = 3
+    # Ancho del papel de la impresora térmica, en mm (58 y 80 son los estándares).
+    ticket_ancho_mm: int = 58
 
     class Config:
         env_file = ".env"

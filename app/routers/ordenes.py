@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from ..templates_config import templates
 from ..database import get_db
+from ..config import get_settings
 from ..auth import get_current_user
 from ..models.orden import Orden, OrdenItem, ESTADOS, ESTADOS_FLUJO
 from ..models.cliente import Cliente
@@ -60,6 +61,19 @@ def _parsear_items(form):
             "servicio_id": int(sid) if str(sid).isdigit() else None,
         })
     return items
+
+
+def _ancho_ticket(valor, defecto: int) -> int:
+    """Ancho del papel térmico en mm. Prioridad: ?ancho=NN (para probar sin
+    reiniciar) → TICKET_ANCHO_MM del .env → 58mm. Se acota a anchos plausibles."""
+    for candidato in (valor, defecto):
+        try:
+            mm = int(candidato)
+        except (TypeError, ValueError):
+            continue
+        if 40 <= mm <= 120:
+            return mm
+    return 58
 
 
 def _parse_fecha(valor):
@@ -217,6 +231,23 @@ async def detalle(orden_id: int, request: Request, db: Session = Depends(get_db)
         request, "ordenes/detalle.html",
         {"user": user, "orden": orden, "ESTADOS": ESTADOS, "ESTADOS_FLUJO": ESTADOS_FLUJO,
          "wa_link": link_whatsapp(orden), "messages": flash_from_query(request)},
+    )
+
+
+@router.get("/{orden_id}/ticket", response_class=HTMLResponse)
+async def ticket(orden_id: int, request: Request, db: Session = Depends(get_db),
+                 user=Depends(get_current_user)):
+    """Ticket angosto para impresora térmica; se imprime con window.print()."""
+    orden = db.query(Orden).filter(Orden.id == orden_id).first()
+    if not orden:
+        return templates.TemplateResponse(request, "404.html", {"user": user}, status_code=404)
+    s = get_settings()
+    return templates.TemplateResponse(
+        request, "ordenes/ticket.html",
+        {"user": user, "orden": orden, "negocio": s.negocio_nombre,
+         "base_url": s.base_url,
+         "ancho_mm": _ancho_ticket(request.query_params.get("ancho"), s.ticket_ancho_mm),
+         "auto_print": request.query_params.get("imprimir") == "1"},
     )
 
 

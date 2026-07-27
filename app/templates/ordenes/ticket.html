@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+{# Ticket para impresora térmica. Plantilla independiente (NO extiende base.html):
+   sin nav, sin footer y sin main.css, para que lo que se imprime sea solo el papel.
+   Se imprime desde el navegador con window.print() — el driver ESC/POS de Windows o
+   la app puente RawBT en Android lo mandan a la impresora. #}
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket {{ orden.codigo }}</title>
+<style>
+/* ── Ancho del papel ─────────────────────────────────────────────────────────
+   Único lugar donde se define: viene de TICKET_ANCHO_MM (.env) y se puede
+   probar al vuelo con ?ancho=80 en la URL. 58mm y 80mm son los dos estándares
+   de las impresoras térmicas.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+    --ticket-ancho: {{ ancho_mm }}mm;
+    --ticket-margen: 3mm;   /* zona muerta a los costados del rollo */
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 1rem .5rem 3rem;
+    background: #E2E8F0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ticket {
+    width: var(--ticket-ancho);
+    max-width: 100%;
+    padding: var(--ticket-margen);
+    background: #fff;
+    color: #000;
+    /* Monoespaciada: es lo que mejor rinde en térmica y alinea los montos. */
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 1.35;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, .25);
+}
+
+/* ── Bloques del ticket ──────────────────────────────────────────────────── */
+.centro { text-align: center; }
+.negocio { font-weight: bold; font-size: 14px; text-transform: uppercase; }
+.sep { border-top: 1px dashed #000; margin: 6px 0; }
+
+.codigo-label { font-size: 10px; letter-spacing: .1em; }
+.codigo { font-size: 22px; font-weight: bold; letter-spacing: .12em; }
+
+.datos div { display: flex; gap: 6px; }
+.datos span:first-child { flex: 0 0 auto; }
+.datos span:last-child { flex: 1; text-align: right; word-break: break-word; }
+
+.express { text-align: center; font-weight: bold; letter-spacing: .1em; margin: 4px 0; }
+
+.titulo { font-weight: bold; font-size: 10px; letter-spacing: .1em; }
+
+.item { margin-bottom: 4px; }
+.item-desc { word-break: break-word; }
+.linea { display: flex; justify-content: space-between; gap: 6px; }
+.linea span:last-child { white-space: nowrap; }
+.item .linea { padding-left: 8px; }
+
+.total { font-weight: bold; font-size: 14px; margin-top: 2px; }
+.saldo { font-weight: bold; }
+.notas { word-break: break-word; }
+.pie { font-size: 10px; margin-top: 2px; }
+
+/* ── Barra de control: solo pantalla, nunca se imprime ───────────────────── */
+.barra {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: center;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px;
+}
+.barra a, .barra button {
+    flex: 1 1 auto;
+    padding: .6rem .8rem;
+    border: 1px solid #B9CBDC;
+    border-radius: 8px;
+    background: #fff;
+    color: #0E7490;
+    font: inherit;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+.barra .primario { background: #0891B2; border-color: #0891B2; color: #fff; font-weight: 600; }
+.barra .activo { background: #DBF3F8; font-weight: 600; }
+.barra-titulo { width: 100%; text-align: center; font-size: 12px; color: #64798C; }
+
+@media print {
+    body { background: #fff; display: block; padding: 0; }
+    .ticket { width: var(--ticket-ancho); max-width: none; box-shadow: none; }
+    .no-print { display: none !important; }
+}
+</style>
+
+{# Tamaño de la hoja. OJO: `@page` no acepta variables CSS, y `size: 58mm auto`
+   es inválido (no se puede mezclar una medida con `auto`) — Chrome descarta la
+   regla entera y sale en tamaño carta. Por eso el alto lo calcula el script del
+   final midiendo el ticket ya renderizado: la hoja queda del largo exacto del
+   pedido y no se desperdicia rollo. Esto de acá es el valor por defecto, por si
+   el navegador no corre el script. #}
+<style id="page-size">@page { size: {{ ancho_mm }}mm 150mm; margin: 0; }</style>
+</head>
+<body>
+
+<div class="ticket">
+    <div class="centro negocio">{{ negocio }}</div>
+
+    <div class="sep"></div>
+
+    <div class="centro">
+        <div class="codigo-label">RECIBO N°</div>
+        <div class="codigo">{{ orden.codigo }}</div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="datos">
+        <div><span>Fecha:</span><span>{{ orden.fecha_ingreso | fechahora }}</span></div>
+        <div><span>Cliente:</span><span>{{ orden.cliente.nombre }}</span></div>
+        <div><span>Tel:</span><span>{{ orden.cliente.telefono }}</span></div>
+        {% if orden.fecha_prometida %}
+        <div><span>Entrega:</span><span>{{ orden.fecha_prometida | fecha }}</span></div>
+        {% endif %}
+    </div>
+
+    {% if orden.express %}
+    <div class="express">*** EXPRESS ***</div>
+    {% endif %}
+
+    <div class="sep"></div>
+
+    <div class="titulo">DETALLE</div>
+    {% for it in orden.items %}
+    {% set uu = it.unidad | unidad %}
+    <div class="item">
+        <div class="item-desc">{{ it.descripcion }}</div>
+        <div class="linea">
+            <span>{{ it.cantidad | cantidad }}{% if uu %} {{ uu }}{% endif %} x {{ it.precio_unit | bs }}</span>
+            <span>{{ it.subtotal | bs }}</span>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="sep"></div>
+
+    {% if orden.descuento or orden.recargo %}
+    <div class="linea"><span>Subtotal</span><span>{{ orden.subtotal_items | bs }}</span></div>
+    {% endif %}
+    {% if orden.descuento %}
+    <div class="linea"><span>Descuento</span><span>-{{ orden.descuento | bs }}</span></div>
+    {% endif %}
+    {% if orden.recargo %}
+    <div class="linea"><span>Recargo</span><span>+{{ orden.recargo | bs }}</span></div>
+    {% endif %}
+    <div class="linea total"><span>TOTAL</span><span>{{ orden.total | bs }}</span></div>
+
+    {% if orden.monto_pagado %}
+    <div class="linea"><span>Abonado</span><span>{{ orden.monto_pagado | bs }}</span></div>
+    {% endif %}
+    {% if orden.saldo > 0 %}
+    <div class="linea saldo"><span>SALDO</span><span>{{ orden.saldo | bs }}</span></div>
+    {% else %}
+    <div class="linea"><span>PAGADO</span><span>OK</span></div>
+    {% endif %}
+
+    {% if orden.notas %}
+    <div class="sep"></div>
+    <div class="notas"><strong>Notas:</strong> {{ orden.notas }}</div>
+    {% endif %}
+
+    <div class="sep"></div>
+
+    <div class="centro pie">
+        <div>Presentá este ticket para retirar tu ropa.</div>
+        <div>Consultá tu pedido en</div>
+        <div>{{ base_url | replace('https://', '') | replace('http://', '') }}/consultar</div>
+        <div>con el código <strong>{{ orden.codigo }}</strong></div>
+    </div>
+</div>
+
+<div class="barra no-print">
+    <button class="primario" onclick="window.print()">🖨️ Imprimir</button>
+    <a href="/ordenes/{{ orden.id }}">← Volver al pedido</a>
+    <div class="barra-titulo">Ancho del papel (solo para probar)</div>
+    <a href="?ancho=58" class="{{ 'activo' if ancho_mm == 58 }}">58 mm</a>
+    <a href="?ancho=80" class="{{ 'activo' if ancho_mm == 80 }}">80 mm</a>
+</div>
+
+<script>
+(function () {
+    var ANCHO_MM = {{ ancho_mm }};
+    var COLA_MM = 4;   // milímetros extra al final para que el corte no muerda el texto
+    var estilo = document.getElementById("page-size");
+
+    /* Ajusta el alto de la hoja al alto real del ticket (96px = 1 pulgada = 25,4mm). */
+    function ajustarPagina() {
+        var alto = document.querySelector(".ticket").getBoundingClientRect().height;
+        var altoMm = Math.ceil(alto / 96 * 25.4) + COLA_MM;
+        estilo.textContent = "@page { size: " + ANCHO_MM + "mm " + altoMm + "mm; margin: 0; }";
+    }
+
+    // `beforeprint` cubre también el Ctrl+P del navegador, no solo el botón.
+    window.addEventListener("beforeprint", ajustarPagina);
+    window.addEventListener("load", function () {
+        ajustarPagina();
+        {% if auto_print %}window.print();{% endif %}
+    });
+})();
+</script>
+</body>
+</html>
