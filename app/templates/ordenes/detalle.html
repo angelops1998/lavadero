@@ -87,7 +87,7 @@
         {% if orden.saldo > 0 %}
         <form method="post" action="/ordenes/{{ orden.id }}/pago" class="pago-form mt">
             {{ csrf_input(request) }}
-            <input type="number" name="monto" min="0" step="0.5" inputmode="decimal" placeholder="Monto Bs" class="input">
+            <input type="number" name="monto" min="0" step="0.01" inputmode="decimal" placeholder="Monto Bs" class="input">
             <button name="accion" value="agregar" class="btn btn-outline btn-sm">Registrar pago</button>
             <button name="accion" value="saldar" class="btn btn-success btn-sm">✅ Saldar todo</button>
         </form>
