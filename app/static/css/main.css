@@ -297,14 +297,14 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 }
 
 /* ── Tablero (stats) ────────────────────────────────────────── */
-.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; margin-bottom: 1.3rem; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.3rem; }
 .stat {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 1rem; box-shadow: var(--shadow); display: block;
+    padding: 1rem; box-shadow: var(--shadow); display: block; min-width: 0;
 }
 .stat:hover { text-decoration: none; border-color: var(--primary); }
-.stat-num { font-size: var(--font-3xl); font-weight: 800; color: var(--text); line-height: 1; }
-.stat-label { color: var(--text-muted); font-weight: 600; font-size: var(--font-sm); margin-top: .3rem; }
+.stat-num { font-size: var(--font-2xl); font-weight: 800; color: var(--text); line-height: 1.15; word-break: break-word; }
+.stat-label { color: var(--text-muted); font-weight: 600; font-size: var(--font-sm); margin-top: .4rem; }
 .stat.destacado { background: var(--primary-soft); border-color: #a9e4ee; }
 .stat.destacado .stat-num { color: var(--primary-dark); }
 
@@ -524,6 +524,7 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 
 @media (min-width: 640px) {
     .stat-grid { grid-template-columns: repeat(4, 1fr); }
+    .stat-num { font-size: var(--font-3xl); }
 }
 
 /* ── Inventario de insumos ──────────────────────────────────── */
