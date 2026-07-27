@@ -283,8 +283,11 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
 .search-bar { display: flex; gap: .5rem; margin-bottom: 1rem; }
+/* El min-width:0 es clave: sin él el campo nunca baja de su ancho por defecto
+   (~248px con letra de 17px) y en teléfonos angostos empuja el botón fuera de
+   la pantalla, dejando toda la página desplazable a lo ancho. */
 .search-bar input {
-    flex: 1; min-height: var(--tap);
+    flex: 1; min-width: 0; min-height: var(--tap);
     padding: .7rem .85rem; font-size: var(--font-base); font-family: inherit;
     color: var(--text); background: var(--bg-input);
     border: 1.5px solid var(--border-dark); border-radius: var(--radius);
