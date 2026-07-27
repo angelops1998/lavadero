@@ -57,6 +57,9 @@
     --tap: 48px;               /* alto mínimo táctil */
     --transition: .18s ease;
     --maxw: 900px;
+    /* La barra de navegación necesita más ancho que la columna de contenido:
+       con 7 secciones + usuario no entra en 900px y se desbordaba. */
+    --maxw-nav: 1140px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -88,7 +91,7 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
     box-shadow: var(--shadow);
 }
 .nav-container {
-    max-width: var(--maxw);
+    max-width: var(--maxw-nav);
     margin: 0 auto;
     padding: 0 1rem;
     height: 62px;
@@ -100,16 +103,27 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 .logo-text { font-size: var(--font-xl); font-weight: 800; color: var(--text); letter-spacing: -.4px; }
 .logo-text em { font-style: normal; color: var(--primary); }
 
-.nav-links { display: flex; align-items: center; gap: .2rem; margin-left: auto; }
+.nav-links { display: flex; align-items: center; gap: .1rem; margin-left: auto; }
 .nav-link {
     color: var(--text-body); font-size: var(--font-sm); font-weight: 600;
-    padding: .55rem .85rem; border-radius: var(--radius); white-space: nowrap;
-    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .55rem .7rem; border-radius: var(--radius-pill); white-space: nowrap;
+    display: inline-flex; align-items: center; gap: .35rem;
+    transition: background var(--transition), color var(--transition);
 }
-.nav-link:hover { background: var(--bg-soft); text-decoration: none; }
-.nav-link.active { color: var(--primary-dark); background: var(--primary-soft); }
-.nav-user { display: flex; align-items: center; gap: .5rem; margin-left: .3rem; }
-.nav-user-name { color: var(--text-muted); font-size: var(--font-sm); font-weight: 600; }
+.nav-link:hover { background: var(--bg-soft); color: var(--text); text-decoration: none; }
+.nav-link.active { color: var(--primary-dark); background: var(--primary-soft); font-weight: 700; }
+
+/* Zona de sesión: va separada por un divisor para que el nombre del usuario
+   no se lea como una sección más del menú. */
+.nav-user {
+    display: flex; align-items: center; gap: .6rem;
+    margin-left: .5rem; padding-left: .8rem;
+    border-left: 1px solid var(--border);
+}
+.nav-user-name {
+    color: var(--text-muted); font-size: var(--font-xs); font-weight: 700;
+    max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 .nav-toggle {
     display: none; margin-left: auto;
@@ -118,7 +132,9 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
 }
 .nav-overlay { display: none; }
 
-@media (max-width: 760px) {
+/* El menú pasa a cajón antes de que la barra se apriete: con 7 secciones
+   abiertas la fila mide ~1050px, así que por debajo de ~1120px no entra. */
+@media (max-width: 1120px) {
     .nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
     .nav-links {
         position: fixed; inset: 62px 0 auto 0;
@@ -129,9 +145,11 @@ h1, h2, h3 { color: var(--text); line-height: 1.25; }
         max-height: calc(100vh - 62px); overflow-y: auto;
     }
     .nav-links.open { transform: translateY(0); }
-    .nav-link { padding: .85rem 1rem; font-size: var(--font-base); min-height: var(--tap); }
-    .nav-user { margin: .4rem 0 0; padding-top: .5rem; border-top: 1px solid var(--border);
-                flex-direction: column; align-items: stretch; }
+    .nav-link { padding: .85rem 1rem; font-size: var(--font-base); min-height: var(--tap);
+                border-radius: var(--radius); }
+    .nav-user { margin: .4rem 0 0; padding: .5rem 0 0; border-top: 1px solid var(--border);
+                border-left: none; flex-direction: column; align-items: stretch; }
+    .nav-user-name { max-width: none; font-size: var(--font-sm); }
     .nav-overlay.open {
         display: block; position: fixed; inset: 62px 0 0 0;
         background: rgba(20,40,60,.35); z-index: 90;
