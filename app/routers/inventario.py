@@ -343,3 +343,29 @@ async def toggle(insumo_id: int, db: Session = Depends(get_db),
         insumo.activo = not insumo.activo
         db.commit()
     return RedirectResponse(url="/inventario", status_code=302)
+
+
+@router.post("/{insumo_id}/eliminar")
+async def eliminar(insumo_id: int, db: Session = Depends(get_db),
+                   user=Depends(get_current_admin)):
+    """Borra un insumo, pero solo si nunca se movió. Con movimientos encima el
+    borrado se llevaría puesto el historial de compras y consumos, así que en
+    ese caso se ocultan (queda fuera de la lista sin perder el registro)."""
+    insumo = db.query(Insumo).filter(Insumo.id == insumo_id).first()
+    if not insumo:
+        return RedirectResponse(url="/inventario?err=Insumo+no+encontrado", status_code=302)
+
+    movimientos = (db.query(func.count(MovimientoInsumo.id))
+                   .filter(MovimientoInsumo.insumo_id == insumo.id).scalar())
+    if movimientos:
+        return _volver(insumo_id, err=(
+            f"«{insumo.nombre}» ya tiene {movimientos} movimiento"
+            f"{'s' if movimientos != 1 else ''} registrado"
+            f"{'s' if movimientos != 1 else ''}: no se puede borrar sin perder ese "
+            f"historial. Usá 'Ocultar' para sacarlo de la lista."))
+
+    nombre = insumo.nombre
+    db.delete(insumo)
+    db.commit()
+    return RedirectResponse(
+        url=f"/inventario?ok={quote_plus(f'Insumo «{nombre}» eliminado')}", status_code=302)
