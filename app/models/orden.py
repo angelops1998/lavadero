@@ -1,11 +1,11 @@
 from decimal import Decimal
-from datetime import date
 from sqlalchemy import (
     Column, Integer, String, Text, Boolean, Numeric, DateTime, Date, ForeignKey,
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..database import Base
+from ..fechas import hoy_local
 
 
 # Flujo de estados y su presentación (etiqueta, color CSS, emoji).
@@ -91,7 +91,7 @@ class Orden(Base):
     def atrasado(self) -> bool:
         """La fecha prometida ya pasó y el pedido aún no se entregó (ni se dio de baja)."""
         return bool(self.fecha_prometida) and self.estado not in ("entregado", "baja") \
-            and self.fecha_prometida < date.today()
+            and self.fecha_prometida < hoy_local()
 
     @property
     def dado_de_baja(self) -> bool:

@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from ..templates_config import templates
+from ..fechas import a_local, hoy_local
 from ..database import get_db
 from ..auth import get_current_admin
 from ..models.orden import Orden, OrdenItem
@@ -30,7 +31,7 @@ def _dec(valor) -> Decimal:
 @router.get("", response_class=HTMLResponse)
 async def reporte(request: Request, db: Session = Depends(get_db),
                   user=Depends(get_current_admin)):
-    hoy = date.today()
+    hoy = hoy_local()
     preset = (request.query_params.get("preset") or "").strip()
     if preset == "hoy":
         desde = hasta = hoy
@@ -45,13 +46,16 @@ async def reporte(request: Request, db: Session = Depends(get_db),
     if hasta < desde:
         desde, hasta = hasta, desde
 
-    # Filtramos por la FECHA (sin hora) de ingreso; portable SQLite/Postgres.
-    ordenes = (
-        db.query(Orden)
-        .filter(func.date(Orden.fecha_ingreso) >= desde,
-                func.date(Orden.fecha_ingreso) <= hasta)
+    # La base guarda UTC y el rango pedido es en días locales, así que traemos
+    # un día de más a cada lado (el desfase nunca llega a 24 h) y recortamos en
+    # Python ya convertido a hora local. Con func.date es portable SQLite/Postgres.
+    ordenes = [
+        o for o in db.query(Orden)
+        .filter(func.date(Orden.fecha_ingreso) >= desde - timedelta(days=1),
+                func.date(Orden.fecha_ingreso) <= hasta + timedelta(days=1))
         .all()
-    )
+        if o.fecha_ingreso is None or desde <= a_local(o.fecha_ingreso).date() <= hasta
+    ]
 
     facturado = cobrado = Decimal("0")
     por_dia = {}
@@ -60,7 +64,7 @@ async def reporte(request: Request, db: Session = Depends(get_db),
         facturado += total
         # Cobrado real = lo efectivamente abonado (incluye señas parciales).
         cobrado += min(_dec(o.monto_pagado), total)
-        d = o.fecha_ingreso.date() if o.fecha_ingreso else desde
+        d = a_local(o.fecha_ingreso).date() if o.fecha_ingreso else desde
         acc = por_dia.setdefault(d, {"facturado": Decimal("0"), "pedidos": 0})
         acc["facturado"] += total
         acc["pedidos"] += 1

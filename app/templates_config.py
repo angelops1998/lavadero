@@ -4,6 +4,8 @@ from decimal import Decimal
 import hmac
 import hashlib
 
+from .fechas import a_local
+
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -56,16 +58,18 @@ _MESES = [
 
 
 def fecha_filter(value) -> str:
-    """Formatea una fecha como '23 jul 2026'."""
+    """Formatea una fecha como '23 jul 2026', en hora local del negocio."""
     if value is None:
         return ""
+    value = a_local(value)
     return f"{value.day} {_MESES[value.month][:3]} {value.year}"
 
 
 def fechahora_filter(value) -> str:
-    """Formatea fecha y hora como '23 jul 2026, 14:35'."""
+    """Formatea fecha y hora como '23 jul 2026, 14:35', en hora local."""
     if value is None:
         return ""
+    value = a_local(value)
     return f"{value.day} {_MESES[value.month][:3]} {value.year}, {value.strftime('%H:%M')}"
 
 

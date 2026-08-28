@@ -82,6 +82,7 @@ no perdona la deuda.
 | `DIAS_ALERTA_RETIRO` | Días listo sin retirar para avisar en el tablero (default `3`)  |
 | `DIAS_ABANDONO`      | Días listo sin retirar para darlo por abandonado (default `30`) |
 | `TICKET_ANCHO_MM`    | Ancho del papel de la impresora térmica: `58` u `80`            |
+| `TIMEZONE`           | Zona horaria para mostrar fechas (default `America/La_Paz`)     |
 
 ## Producción
 

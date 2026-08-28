@@ -8,7 +8,7 @@
    nadie la vino a buscar.
 """
 from decimal import Decimal, InvalidOperation
-from datetime import date, timedelta
+from datetime import timedelta
 from urllib.parse import quote_plus
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -16,6 +16,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from ..templates_config import templates
 from ..database import get_db
+from ..fechas import a_local, hoy_local
 from ..config import get_settings
 from ..auth import get_current_user, get_current_admin
 from ..models.insumo import Insumo, MovimientoInsumo, UNIDADES_INSUMO, TIPOS_MOVIMIENTO
@@ -79,8 +80,9 @@ def _dias_desde(momento) -> int:
     mezclar datetimes con y sin zona horaria (SQLite los devuelve sin zona)."""
     if not momento:
         return 0
+    momento = a_local(momento)
     dia = momento.date() if hasattr(momento, "date") else momento
-    return max((date.today() - dia).days, 0)
+    return max((hoy_local() - dia).days, 0)
 
 
 # ── Insumos ──────────────────────────────────────────────────────────
@@ -151,7 +153,7 @@ async def custodia(request: Request, db: Session = Depends(get_db),
     listos = db.query(Orden).filter(Orden.estado == "listo").count()
 
     # Abandonados: listos hace más de N días y todavía sin retirar.
-    corte = date.today() - timedelta(days=dias_abandono)
+    corte = hoy_local() - timedelta(days=dias_abandono)
     ordenes = (
         db.query(Orden)
         .filter(Orden.estado == "listo", Orden.fecha_listo != None,  # noqa: E711

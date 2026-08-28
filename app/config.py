@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     dias_abandono: int = 30
     # Ancho del papel de la impresora térmica, en mm (58 y 80 son los estándares).
     ticket_ancho_mm: int = 58
+    # Zona horaria del negocio: la base guarda todo en UTC y se muestra en esta.
+    timezone: str = "America/La_Paz"
 
     class Config:
         env_file = ".env"
