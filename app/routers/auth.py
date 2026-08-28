@@ -3,9 +3,20 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from ..templates_config import templates
 from ..database import get_db
+from ..config import get_settings
 from ..auth import authenticate_user, create_access_token, get_current_user_optional
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _destino_seguro(destino: str) -> str:
+    """A dónde mandar después del login. Solo rutas de este sitio: si no, un
+    link armado con ?next=https://otro-sitio.com llevaría al que se acaba de
+    loguear a una página ajena que puede hacerse pasar por LavaApp."""
+    destino = (destino or "").strip()
+    if not destino.startswith("/") or destino.startswith("//") or destino.startswith("/\\"):
+        return "/"
+    return destino
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -13,7 +24,7 @@ async def login_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user_optional(request, db)
     if user:
         return RedirectResponse(url="/", status_code=302)
-    next_url = request.query_params.get("next", "/")
+    next_url = _destino_seguro(request.query_params.get("next", "/"))
     return templates.TemplateResponse(
         request, "auth/login.html", {"next": next_url, "user": None, "hide_footer": True}
     )
@@ -53,13 +64,15 @@ async def login(
         )
 
     token = create_access_token(data={"sub": user.usuario})
-    response = RedirectResponse(url=next or "/", status_code=302)
+    response = RedirectResponse(url=_destino_seguro(next), status_code=302)
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
         max_age=60 * 60 * 24 * 7,  # 7 días
         samesite="lax",
+        # Con HTTPS_ONLY=true la sesión no viaja nunca por HTTP en claro.
+        secure=get_settings().https_only,
     )
     return response
 

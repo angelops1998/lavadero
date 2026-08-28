@@ -73,7 +73,12 @@ def get_current_user(
     """Devuelve el usuario staff autenticado o redirige al login."""
     user = get_current_user_optional(request, db)
     if not user:
-        raise NotAuthenticatedException(next_url=request.url.path)
+        # Con la query incluida: si la sesión vence mirando /reportes?desde=…,
+        # volver al login no tiene que perder los filtros que había puesto.
+        destino = request.url.path
+        if request.url.query:
+            destino = f"{destino}?{request.url.query}"
+        raise NotAuthenticatedException(next_url=destino)
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Usuario inactivo")
     return user
