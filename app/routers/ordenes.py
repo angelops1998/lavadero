@@ -354,14 +354,20 @@ async def cambiar_estado(orden_id: int, request: Request, db: Session = Depends(
     nuevo = (form.get("estado") or "").strip()
     # "baja" no se llega desde acá: pide un motivo y va por /baja, que además
     # deja fecha_baja. Este endpoint sirve para revertirla (ej. volver a "listo").
-    if nuevo in ESTADOS and nuevo != "baja":
-        orden.estado = nuevo
-        ahora = datetime.now(timezone.utc)
-        if nuevo == "listo" and not orden.fecha_listo:
-            orden.fecha_listo = ahora
-        if nuevo == "entregado" and not orden.fecha_entrega:
-            orden.fecha_entrega = ahora
-        db.commit()
+    if nuevo not in ESTADOS or nuevo == "baja":
+        # No avisar "listo" cuando en realidad no se guardó nada: si el estado no
+        # llegó, el mostrador tiene que enterarse y volver a tocar el botón.
+        return RedirectResponse(
+            url=f"/ordenes/{orden_id}?err=No+se+pudo+cambiar+el+estado%2C+intentá+de+nuevo",
+            status_code=302,
+        )
+    orden.estado = nuevo
+    ahora = datetime.now(timezone.utc)
+    if nuevo == "listo" and not orden.fecha_listo:
+        orden.fecha_listo = ahora
+    if nuevo == "entregado" and not orden.fecha_entrega:
+        orden.fecha_entrega = ahora
+    db.commit()
     return RedirectResponse(
         url=f"/ordenes/{orden_id}?ok=Estado+actualizado", status_code=302
     )
