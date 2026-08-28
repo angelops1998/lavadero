@@ -1,7 +1,9 @@
+from urllib.parse import urlencode
 from fastapi import FastAPI, Request
-from fastapi.exceptions import HTTPException
+from fastapi.exceptions import HTTPException, RequestValidationError
+from fastapi.encoders import jsonable_encoder
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from .config import get_settings
 from .routers import (
@@ -101,7 +103,19 @@ app.add_middleware(NoCacheHTMLMiddleware)
 
 @app.exception_handler(NotAuthenticatedException)
 async def not_authenticated_handler(request: Request, exc: NotAuthenticatedException):
-    return RedirectResponse(url=f"/auth/login?next={exc.next_url}", status_code=302)
+    # urlencode: el destino puede traer su propia query (?estado=listo) y sin
+    # escapar el '&' partiría el parámetro next a la mitad.
+    return RedirectResponse(url=f"/auth/login?{urlencode({'next': exc.next_url})}",
+                            status_code=302)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    # Un id que no es número en la URL (/ordenes/abc) es, para el que navega,
+    # una página que no existe — no un error de API en JSON crudo.
+    if any((e.get("loc") or [""])[0] == "path" for e in exc.errors()):
+        return templates.TemplateResponse(request, "404.html", {}, status_code=404)
+    return JSONResponse({"detail": jsonable_encoder(exc.errors())}, status_code=422)
 
 
 @app.exception_handler(403)
