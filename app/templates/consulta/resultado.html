@@ -28,6 +28,8 @@
             <div class="sub">¡Ya podés pasar a retirar tu ropa! 🎉</div>
             {% elif orden.estado == 'entregado' %}
             <div class="sub">Este pedido ya fue entregado.</div>
+            {% elif orden.estado == 'baja' %}
+            <div class="sub">Pasó mucho tiempo sin retirarse. Acercate al local para consultar por tu ropa.</div>
             {% else %}
             <div class="sub">Te avisaremos cuando esté lista.</div>
             {% endif %}
