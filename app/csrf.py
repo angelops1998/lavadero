@@ -21,8 +21,14 @@ def get_csrf_token(request: Request) -> str:
 
 
 def set_csrf_cookie(response, token: str):
+    """Deja la cookie del token. Dura lo mismo que la sesión de login (7 días):
+    si venciera antes, el mostrador seguiría logueado pero con la cookie
+    perdida. `samesite=lax` para que entrar desde un link de afuera (WhatsApp)
+    no llegue sin cookie; los POST de otro sitio siguen sin mandarla, que es lo
+    que protege el formulario."""
     secure = get_settings().https_only
-    response.set_cookie(_COOKIE, token, httponly=False, samesite="strict", secure=secure)
+    response.set_cookie(_COOKIE, token, httponly=False, samesite="lax",
+                        secure=secure, max_age=60 * 60 * 24 * 7)
 
 
 def validate_csrf(request: Request, form_token: str):

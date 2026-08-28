@@ -11,7 +11,9 @@ templates = Jinja2Templates(directory="app/templates")
 
 def _csrf_input(request) -> Markup:
     from .config import get_settings
-    cookie_token = request.cookies.get("csrf_token", "")
+    # El middleware deja en request.state el token de esta visita (la cookie que
+    # vino, o la que se va a mandar en esta misma respuesta si todavía no había).
+    cookie_token = getattr(request.state, "csrf_token", "") or request.cookies.get("csrf_token", "")
     signed = hmac.new(
         get_settings().secret_key.encode(), cookie_token.encode(), hashlib.sha256
     ).hexdigest()

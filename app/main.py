@@ -34,6 +34,15 @@ _CSRF_EXEMPT = {"/auth/login"}
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        # El token tiene que existir ANTES de dibujar la página: si la cookie no
+        # vino (navegador recién abierto, pestaña nueva, link de afuera), se
+        # genera acá y la plantilla firma ESTE token. Antes se firmaba una cookie
+        # vacía y recién después se mandaba una nueva y distinta, así que el
+        # primer formulario que se guardaba tiraba 403 "Acceso denegado".
+        cookie_token = request.cookies.get("csrf_token")
+        token_nuevo = None if cookie_token else secrets.token_hex(32)
+        request.state.csrf_token = cookie_token or token_nuevo
+
         if request.method == "POST" and request.url.path not in _CSRF_EXEMPT:
             body = await request.body()
 
@@ -57,12 +66,15 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             try:
                 validate_csrf(request, form_token)
             except HTTPException:
-                return templates.TemplateResponse(request, "403.html", {}, status_code=403)
+                # El 403 también deja la cookie: así el reintento ya sale bien.
+                response = templates.TemplateResponse(request, "403.html", {}, status_code=403)
+                if token_nuevo:
+                    set_csrf_cookie(response, token_nuevo)
+                return response
 
         response = await call_next(request)
-        if "csrf_token" not in request.cookies:
-            token = secrets.token_hex(32)
-            set_csrf_cookie(response, token)
+        if token_nuevo:
+            set_csrf_cookie(response, token_nuevo)
         return response
 
 
