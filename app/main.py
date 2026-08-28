@@ -66,7 +66,25 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class NoCacheHTMLMiddleware(BaseHTTPMiddleware):
+    """Las páginas HTML muestran datos que cambian (el estado de un pedido, el
+    tablero). Sin esta cabecera el navegador se queda con la copia vieja y el
+    cliente sigue viendo "Recibido" aunque en el mostrador ya se haya marcado
+    "En proceso". Los estáticos no pasan por acá: los cachea nginx."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
+
+# El orden importa: se ejecutan de abajo hacia arriba, así que la cabecera se
+# agrega también a las respuestas que devuelve el CSRF (ej. el 403).
 app.add_middleware(CSRFMiddleware)
+app.add_middleware(NoCacheHTMLMiddleware)
 
 
 @app.exception_handler(NotAuthenticatedException)

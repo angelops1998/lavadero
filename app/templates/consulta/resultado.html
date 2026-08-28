@@ -3,7 +3,12 @@
 
 {% block content %}
 <div class="consulta-result">
-    <a href="/consultar" class="back-link">← Nueva consulta</a>
+    <div class="result-top">
+        <a href="/consultar" class="back-link">← Nueva consulta</a>
+        {% if not no_encontrado %}
+        <button type="button" class="btn btn-outline btn-sm" id="btnActualizar">🔄 Actualizar</button>
+        {% endif %}
+    </div>
 
     {% if no_encontrado %}
     <div class="card" style="text-align:center;">
@@ -67,4 +72,39 @@
         {% endfor %}
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// El estado del pedido cambia en el mostrador mientras el cliente ya tiene esta
+// página abierta. Sin esto el celular restaura la copia guardada (bfcache) al
+// volver a la pestaña y sigue mostrando el estado viejo.
+(function () {
+    var cargadaEn = Date.now();
+    var VIEJA = 30000;   // a partir de acá lo que se ve puede estar desactualizado
+
+    window.addEventListener('pageshow', function (e) {
+        var nav = performance.getEntriesByType('navigation')[0];
+        if (e.persisted || (nav && nav.type === 'back_forward')) location.reload();
+    });
+
+    // Volver a la pestaña después de un rato = querer ver el estado de ahora.
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && Date.now() - cargadaEn > VIEJA) {
+            location.reload();
+        }
+    });
+
+    var btn = document.getElementById('btnActualizar');
+    if (btn) btn.addEventListener('click', function () { location.reload(); });
+
+{% if pendiente %}
+    // Mientras el pedido siga en curso, refrescar solo — pero únicamente con la
+    // pestaña a la vista, para no gastar datos en segundo plano.
+    setInterval(function () {
+        if (document.visibilityState === 'visible') location.reload();
+    }, 60000);
+{% endif %}
+})();
+</script>
 {% endblock %}

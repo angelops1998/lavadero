@@ -46,6 +46,10 @@ async def consultar(request: Request, db: Session = Depends(get_db)):
         if not ordenes:
             no_encontrado = True
 
+    # Si algún pedido sigue en curso, la página se refresca sola: el cliente la
+    # deja abierta esperando el "listo para retirar".
+    pendiente = any(o.estado not in ("entregado", "baja") for o in ordenes)
+
     return templates.TemplateResponse(
         request,
         "consulta/resultado.html",
@@ -54,5 +58,6 @@ async def consultar(request: Request, db: Session = Depends(get_db)):
             "ordenes": ordenes,
             "no_encontrado": no_encontrado,
             "busqueda": codigo or telefono,
+            "pendiente": pendiente,
         },
     )
