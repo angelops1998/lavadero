@@ -23,12 +23,15 @@ async def dashboard(request: Request, db: Session = Depends(get_db),
     recibidos = db.query(Orden).filter(Orden.estado == "recibido").count()
     total_clientes = db.query(Cliente).count()
 
+    # Lo pendiente es el saldo, no el total: si el cliente dejó una seña, esa
+    # plata ya está cobrada. Así el panel dice lo mismo que /reportes.
     facturado = Decimal("0")
     pendiente = Decimal("0")
-    for total, pagado in db.query(Orden.total, Orden.pagado).all():
-        facturado += total or 0
-        if not pagado:
-            pendiente += total or 0
+    for total, monto_pagado in db.query(Orden.total, Orden.monto_pagado).all():
+        total = Decimal(str(total or 0))
+        abonado = min(Decimal(str(monto_pagado or 0)), total)
+        facturado += total
+        pendiente += total - abonado
 
     return templates.TemplateResponse(
         request, "admin/dashboard.html",
