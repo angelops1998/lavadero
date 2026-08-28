@@ -4,8 +4,7 @@ from sqlalchemy.orm import Session
 from ..templates_config import templates
 from ..database import get_db
 from ..models.orden import Orden
-from ..models.cliente import Cliente
-from ..utils import normalizar_telefono
+from ..utils import buscar_cliente
 
 router = APIRouter()
 
@@ -30,16 +29,10 @@ async def consultar(request: Request, db: Session = Depends(get_db)):
         else:
             no_encontrado = True
     else:
-        tel = normalizar_telefono(telefono)
-        cliente = None
-        if tel:
-            # Comparar por los dígitos guardados (tolerante a formato).
-            for c in db.query(Cliente).all():
-                if normalizar_telefono(c.telefono) == tel:
-                    cliente = c
-                    break
+        # Tolerante al formato: da igual si lo escribe con 591 adelante o sin él.
+        cliente = buscar_cliente(db, telefono)
         if cliente:
-            ordenes = [o for o in cliente.ordenes if o.estado != "entregado"]
+            ordenes = [o for o in cliente.ordenes if o.estado not in ("entregado", "baja")]
             if not ordenes:
                 # Tiene cliente pero sin pedidos activos → mostrar igual el más reciente.
                 ordenes = cliente.ordenes[:1]

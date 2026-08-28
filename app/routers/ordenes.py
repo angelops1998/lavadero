@@ -11,7 +11,8 @@ from ..auth import get_current_user
 from ..models.orden import Orden, OrdenItem, ESTADOS, ESTADOS_FLUJO
 from ..models.cliente import Cliente
 from ..models.servicio import Servicio
-from ..utils import generar_codigo, normalizar_telefono, link_whatsapp, flash_from_query
+from ..utils import (generar_codigo, normalizar_telefono, buscar_cliente,
+                     link_whatsapp, flash_from_query)
 
 router = APIRouter(prefix="/ordenes", tags=["ordenes"])
 
@@ -185,7 +186,7 @@ async def crear(request: Request, db: Session = Depends(get_db),
         )
 
     # Upsert del cliente por teléfono normalizado.
-    cliente = db.query(Cliente).filter(Cliente.telefono == cliente_telefono).first()
+    cliente = buscar_cliente(db, cliente_telefono)
     if cliente:
         if cliente_nombre and cliente_nombre != cliente.nombre:
             cliente.nombre = cliente_nombre
@@ -309,7 +310,7 @@ async def editar(orden_id: int, request: Request, db: Session = Depends(get_db),
         )
 
     # Cliente (upsert por teléfono).
-    cliente = db.query(Cliente).filter(Cliente.telefono == cliente_telefono).first()
+    cliente = buscar_cliente(db, cliente_telefono)
     if cliente:
         if cliente_nombre and cliente_nombre != cliente.nombre:
             cliente.nombre = cliente_nombre

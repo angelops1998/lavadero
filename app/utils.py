@@ -16,23 +16,48 @@ def generar_codigo(largo: int = 5) -> str:
 
 
 def normalizar_telefono(telefono: str) -> str:
-    """Deja solo dígitos. Quita ceros iniciales y el '+' si estuvieran."""
+    """Número local, como lo dicta el mostrador: solo dígitos, sin el '+', sin
+    ceros iniciales y sin el código de país.
+
+    El mismo cliente se anota un día como 71234567 y otro como 591 71234567; si
+    se guardaran tal cual serían dos clientes distintos y la consulta pública por
+    teléfono encontraría solo uno. Guardando siempre la forma corta, las dos
+    maneras de escribirlo caen en el mismo registro."""
     if not telefono:
         return ""
-    digitos = "".join(c for c in telefono if c.isdigit())
+    digitos = "".join(c for c in telefono if c.isdigit()).lstrip("0")
+    cod = get_settings().codigo_pais
+    # Solo se saca el prefijo si lo que queda sigue siendo un número plausible
+    # (7 dígitos o más), así un local que casualmente empiece con 591 no se rompe.
+    if cod and digitos.startswith(cod) and len(digitos) - len(cod) >= 7:
+        digitos = digitos[len(cod):].lstrip("0")
     return digitos
 
 
 def telefono_whatsapp(telefono: str) -> str:
-    """Devuelve el número en formato internacional para wa.me (ej. 59171234567).
-    Si ya trae el código de país lo respeta; si no, lo antepone."""
+    """Devuelve el número en formato internacional para wa.me (ej. 59171234567)."""
     digitos = normalizar_telefono(telefono)
     if not digitos:
         return ""
-    cod = get_settings().codigo_pais
-    if digitos.startswith(cod):
-        return digitos
-    return f"{cod}{digitos}"
+    return f"{get_settings().codigo_pais}{digitos}"
+
+
+def buscar_cliente(db, telefono: str):
+    """Busca el cliente por teléfono. Además del número ya normalizado, revisa
+    los registros viejos que hayan quedado guardados con el código de país
+    adelante, para no crear un duplicado del mismo cliente."""
+    from .models.cliente import Cliente
+    tel = normalizar_telefono(telefono)
+    if not tel:
+        return None
+    cliente = db.query(Cliente).filter(Cliente.telefono == tel).first()
+    if cliente:
+        return cliente
+    # Son pocos registros (una lavandería de barrio): comparar en Python alcanza.
+    for c in db.query(Cliente).all():
+        if normalizar_telefono(c.telefono) == tel:
+            return c
+    return None
 
 
 def _fmt_bs(value) -> str:

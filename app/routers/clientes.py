@@ -7,7 +7,7 @@ from ..templates_config import templates
 from ..database import get_db
 from ..auth import get_current_user
 from ..models.cliente import Cliente
-from ..utils import normalizar_telefono, flash_from_query
+from ..utils import normalizar_telefono, buscar_cliente, flash_from_query
 
 router = APIRouter(prefix="/clientes", tags=["clientes"])
 
@@ -52,6 +52,13 @@ async def crear(request: Request, nombre: str = Form(""), telefono: str = Form("
              "form": {"nombre": nombre, "telefono": tel, "notas": notas}},
             status_code=422,
         )
+    # Mismo número escrito de otra forma (con 591 adelante, con ceros) = mismo
+    # cliente: mandar al que ya existe en vez de crear un duplicado.
+    ya_esta = buscar_cliente(db, tel)
+    if ya_esta:
+        return RedirectResponse(url=f"/clientes/{ya_esta.id}?err=Ese+telefono+ya+existe",
+                                status_code=302)
+
     cliente = Cliente(nombre=nombre, telefono=tel, notas=notas.strip() or None)
     try:
         db.add(cliente)
@@ -100,6 +107,13 @@ async def editar(cliente_id: int, request: Request, nombre: str = Form(""),
         return templates.TemplateResponse(
             request, "clientes/form.html",
             {"user": user, "cliente": cliente, "error": "Nombre y teléfono son obligatorios."},
+            status_code=422,
+        )
+    otro = buscar_cliente(db, tel)
+    if otro and otro.id != cliente.id:
+        return templates.TemplateResponse(
+            request, "clientes/form.html",
+            {"user": user, "cliente": cliente, "error": "Ese teléfono ya pertenece a otro cliente."},
             status_code=422,
         )
     cliente.nombre = nombre
